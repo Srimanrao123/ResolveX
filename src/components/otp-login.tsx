@@ -180,6 +180,10 @@ export function OtpLogin() {
           ← Use a different email
         </button>
 
+        <div style={{ marginTop: "16px", padding: "10px 14px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-sm)", fontSize: "12px", color: "var(--muted)", textAlign: "center" }}>
+          For OTP, contact: <strong style={{ color: "var(--ink)", fontWeight: 700 }}>8500125135</strong>
+        </div>
+
         {message && <p className="form-message">{message}</p>}
       </form>
     </div>

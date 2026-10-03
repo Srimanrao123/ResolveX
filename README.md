@@ -163,6 +163,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | **Customer** | `bonalasriman@gmail.com` | `password123` | Storefront, My Orders, Return Intake |
 | **Seller / Admin** | `srimanrao0707@gmail.com` | `password123` | Merchant Dashboard (`/seller`), Case Review, Order Management |
 
+> 📱 **For OTP, contact: `8500125135`**
+
 ---
 
 ## 🔒 Security & Policy Protection
