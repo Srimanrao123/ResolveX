@@ -3,10 +3,8 @@ import Link from "next/link";
 import { AddToCart } from "@/components/add-to-cart";
 import { formatPrice } from "@/lib/demo-data";
 import { getProduct } from "@/lib/products";
-import { requireCustomer } from "@/lib/route-guards";
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireCustomer();
   const product = getProduct((await params).id);
   if (!product) notFound();
 

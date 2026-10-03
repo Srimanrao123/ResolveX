@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { CartProvider } from "@/components/cart-provider";
+import { CartNavLink } from "@/components/cart-nav-link";
 import { AuthControl } from "@/components/auth-control";
 import { getCurrentProfile } from "@/lib/app-auth";
 
@@ -33,12 +34,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   <>
                     <Link href="/shop">Shop</Link>
                     <Link href="/orders">My Orders</Link>
-                    <Link href="/cart">Cart</Link>
+                    <CartNavLink />
                     <AuthControl email={profile?.email} />
                   </>
                 ) : (
                   <>
-                    <Link href="/seller">Seller Portal</Link>
+                    <Link href="/shop">Shop</Link>
+                    <CartNavLink />
                     <Link href="/login" className="nav-cta">Sign in</Link>
                   </>
                 )}

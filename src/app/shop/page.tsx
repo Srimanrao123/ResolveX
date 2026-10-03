@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { products } from "@/lib/products";
 import { formatPrice } from "@/lib/demo-data";
-import { requireCustomer } from "@/lib/route-guards";
 
 export default async function ShopPage() {
-  await requireCustomer();
   return (
     <div className="page-shell">
       <div className="page-heading">

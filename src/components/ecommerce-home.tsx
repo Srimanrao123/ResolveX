@@ -140,7 +140,7 @@ export function EcommerceHome({ profile, recentOrders = [] }: EcommerceHomeProps
               <div className="order-strip-info">
                 <span className="order-strip-badge">Recent Delivery</span>
                 <h3>{lastOrder.product}</h3>
-                <p>
+                <p suppressHydrationWarning>
                   Delivered on{" "}
                   {new Date(lastOrder.deliveredAt).toLocaleDateString("en-IN", {
                     day: "numeric",

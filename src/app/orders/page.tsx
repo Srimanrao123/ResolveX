@@ -15,7 +15,6 @@ export default async function OrdersPage() {
           <h1>My orders</h1>
           <p>Delivered orders eligible for returns, exchanges, or re-ordering.</p>
         </div>
-        {isDemo && <span className="demo-pill">Demo customer mode</span>}
       </div>
 
       <div className="order-list">

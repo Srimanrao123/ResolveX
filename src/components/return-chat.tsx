@@ -10,7 +10,7 @@ type Step =
   | "reason_input"
   | "resolution"
   | "evidence"
-  | "investigating"
+  | "submitting"
   | "done";
 
 type Message = {
@@ -30,15 +30,6 @@ const reasonOptions: { value: ReturnReason; label: string; emoji: string }[] = [
   { value: "OTHER", label: "Something else", emoji: "❓" },
 ];
 
-const investigationSteps = [
-  { label: "Verifying your order", delay: 800 },
-  { label: "Checking return policy", delay: 1600 },
-  { label: "Understanding return reason", delay: 2400 },
-  { label: "Reviewing evidence", delay: 3200 },
-  { label: "Checking return history", delay: 4000 },
-  { label: "Generating decision", delay: 4800 },
-];
-
 function uid() {
   return Math.random().toString(36).slice(2);
 }
@@ -55,9 +46,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
   const [evidenceContentType, setEvidenceContentType] = useState<string | null>(null);
   const [evidenceMessage, setEvidenceMessage] = useState("");
   const [uploadingEvidence, setUploadingEvidence] = useState(false);
-  const [investigationProgress, setInvestigationProgress] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
-  const [textInput, setTextInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -67,34 +56,61 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
     setMessages((prev) => [...prev, { id: uid(), from, text }]);
   }
 
-  // Scroll to bottom whenever messages change
+  // Scroll to bottom whenever messages or step change
   useEffect(() => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 60);
-  }, [messages, step, investigationProgress]);
+    return () => clearTimeout(timer);
+  }, [messages, step]);
 
-  // Start the chat
+  // Initialize or re-initialize conversation whenever the order changes
   useEffect(() => {
+    setMessages([]);
+    setStep("greeting");
+    setReason(null);
+    setResolution("refund");
+    setCustomMessage("");
+    setHasEvidence(false);
+    setEvidencePath(null);
+    setEvidenceContentType(null);
+    setEvidenceMessage("");
+    setLoading(false);
+
+    const t1 = setTimeout(() => {
+      setMessages([
+        {
+          id: uid(),
+          from: "agent",
+          text: `Hi there 👋 We're here to assist with your return or exchange for **${order.product}** (Order #${order.id}).`,
+        },
+      ]);
+      const t2 = setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: uid(),
+            from: "agent",
+            text: "Would you like to initiate a return or exchange for this item?",
+          },
+        ]);
+        setStep("confirm_order");
+      }, 700);
+      return () => clearTimeout(t2);
+    }, 300);
+
+    return () => clearTimeout(t1);
+  }, [order.id, order.orderItemId, order.product]);
+
+  function confirmOrder() {
+    addMessage("user", "Yes, start my return.");
     setTimeout(() => {
       addMessage(
         "agent",
-        `Hi there 👋 I'm ReturnGuard. I can see your order — **${order.product}** (Order #${order.id}). I'll take care of your return.`
+        "Got it! What brings you to return this item? Please select the option that best describes the issue."
       );
-      setTimeout(() => {
-        addMessage("agent", "Would you like to start a return for this order?");
-        setStep("confirm_order");
-      }, 900);
-    }, 400);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function confirmOrder() {
-    addMessage("user", "Yes, I want to return this order.");
-    setTimeout(() => {
-      addMessage("agent", "Got it. What's the reason for your return? Please pick the option that best describes the issue.");
       setStep("reason_input");
-    }, 600);
+    }, 500);
   }
 
   function selectReason(r: ReturnReason) {
@@ -102,114 +118,106 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
     setReason(r);
     addMessage("user", label);
     setTimeout(() => {
-      if (customMessage === "") {
-        addMessage("agent", "Thanks. Would you like to add any extra details? (optional)");
-      }
+      addMessage("agent", "How would you prefer to resolve this? You can also add any notes below.");
       setStep("resolution");
-    }, 600);
-  }
-
-  function submitMessage() {
-    if (customMessage.trim()) {
-      addMessage("user", customMessage.trim());
-    }
-    setCustomMessage("");
-    setTimeout(() => {
-      addMessage("agent", "How would you like this resolved?");
-    }, 400);
+    }, 500);
   }
 
   function selectResolution(res: "refund" | "exchange") {
     setResolution(res);
     addMessage("user", res === "refund" ? "I'd like a refund" : "I'd like an exchange");
+    if (customMessage.trim()) {
+      addMessage("user", customMessage.trim());
+    }
+
     if (needsEvidence) {
       setTimeout(() => {
-        addMessage("agent", "Since you mentioned a damage or defect issue, please upload a photo so I can review it. This helps me process your return faster.");
+        addMessage(
+          "agent",
+          "Since you reported a damage or defect, please attach a clear photo of the item if possible. This helps us expedite your request."
+        );
         setStep("evidence");
-      }, 700);
+      }, 600);
     } else {
       setTimeout(() => {
-        addMessage("agent", "Perfect. Let me now investigate your return request…");
-        setStep("investigating");
-        startInvestigation({ evidence: false });
-      }, 700);
+        addMessage("agent", "Thank you. Submitting your request now…");
+        setStep("submitting");
+        submitReturn({ evidence: false });
+      }, 600);
     }
   }
 
   function skipEvidence() {
     addMessage("user", "I'll skip the photo for now.");
     setTimeout(() => {
-      addMessage("agent", "No problem. Let me investigate your request…");
-      setStep("investigating");
-      startInvestigation({ evidence: false });
-    }, 600);
+      addMessage("agent", "No problem. Submitting your return request now…");
+      setStep("submitting");
+      submitReturn({ evidence: false });
+    }, 500);
   }
 
   async function addEvidence(file?: File) {
     if (!file) return;
     const allowed = ["image/jpeg", "image/png", "image/webp"];
     if (!allowed.includes(file.type) || file.size > 5 * 1024 * 1024) {
-      setEvidenceMessage("Please choose a JPG, PNG, or WebP image smaller than 5 MB.");
+      setEvidenceMessage("Please choose a JPG, PNG, or WebP image under 5 MB.");
       return;
     }
     if (!order.orderItemId) {
       setHasEvidence(true);
-      setEvidenceMessage("Photo added ✓");
+      setEvidenceMessage("Photo attached ✓");
       return;
     }
     setUploadingEvidence(true);
-    setEvidenceMessage("Uploading…");
+    setEvidenceMessage("Uploading photo…");
     const form = new FormData();
     form.append("file", file);
-    const response = await fetch("/api/returns/evidence-upload", { method: "POST", body: form });
-    const result = await response.json() as { path?: string; contentType?: string; error?: string };
-    setUploadingEvidence(false);
-    if (!response.ok || !result.path || !result.contentType) {
-      setEvidenceMessage(result.error ?? "Upload failed. Please try again.");
-      return;
+    try {
+      const response = await fetch("/api/returns/evidence-upload", { method: "POST", body: form });
+      const result = (await response.json()) as { path?: string; contentType?: string; error?: string };
+      setUploadingEvidence(false);
+      if (!response.ok || !result.path || !result.contentType) {
+        setEvidenceMessage(result.error ?? "Upload failed. Please try again.");
+        return;
+      }
+      setEvidencePath(result.path);
+      setEvidenceContentType(result.contentType);
+      setHasEvidence(true);
+      setEvidenceMessage("Photo attached ✓");
+    } catch {
+      setUploadingEvidence(false);
+      setEvidenceMessage("Upload failed. Please try again.");
     }
-    setEvidencePath(result.path);
-    setEvidenceContentType(result.contentType);
-    setHasEvidence(true);
-    setEvidenceMessage("Photo uploaded ✓");
   }
 
   function submitEvidence() {
-    addMessage("user", hasEvidence ? "Photo uploaded." : "Skipping photo.");
+    addMessage("user", hasEvidence ? "Photo uploaded." : "Proceeding without photo.");
     setTimeout(() => {
-      addMessage("agent", "Received. Now let me investigate your return…");
-      setStep("investigating");
-      startInvestigation({ evidence: hasEvidence });
-    }, 600);
-  }
-
-  async function startInvestigation({ evidence }: { evidence: boolean }) {
-    // Animate investigation steps
-    for (let i = 0; i < investigationSteps.length; i++) {
-      await new Promise<void>((resolve) =>
-        setTimeout(() => {
-          setInvestigationProgress((prev) => [...prev, i]);
-          resolve();
-        }, investigationSteps[i].delay)
-      );
-    }
-    // After animation, submit
-    await submitReturn({ evidence });
+      addMessage("agent", "Thank you! Submitting your return request now…");
+      setStep("submitting");
+      submitReturn({ evidence: hasEvidence });
+    }, 500);
   }
 
   async function submitReturn({ evidence }: { evidence: boolean }) {
     setLoading(true);
     const endpoint = order.orderItemId ? "/api/returns" : "/api/returns/evaluate";
     let assessment: "yes" | "no" | "unclear" | undefined = evidence ? "unclear" : undefined;
+
     if (order.orderItemId && evidencePath && evidenceContentType && needsEvidence) {
-      const reviewed = await fetch("/api/returns/evidence-review", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ evidencePath, contentType: evidenceContentType, reason }),
-      });
-      const review = await reviewed.json().catch(() => null) as { supportsClaim?: "yes" | "no" | "unclear" } | null;
-      assessment = review?.supportsClaim ?? "unclear";
+      try {
+        const reviewed = await fetch("/api/returns/evidence-review", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ evidencePath, contentType: evidenceContentType, reason }),
+        });
+        const review = (await reviewed.json().catch(() => null)) as { supportsClaim?: "yes" | "no" | "unclear" } | null;
+        assessment = review?.supportsClaim ?? "unclear";
+      } catch {
+        assessment = "unclear";
+      }
     }
+
     const payload = order.orderItemId
       ? {
           orderItemId: order.orderItemId,
@@ -231,37 +239,61 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
           recentDamageClaims: reason === "DAMAGED" ? 3 : 0,
           isFinalSale: order.id === "TH10071",
         };
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const result = await response.json().catch(() => null) as { outcome?: string } | null;
-    setLoading(false);
-    setStep("done");
-    const target =
-      result?.outcome === "APPROVED"
-        ? "approved"
-        : result?.outcome === "MORE_INFO_REQUIRED"
-        ? "more-info"
-        : result?.outcome === "NOT_ELIGIBLE"
-        ? "not-eligible"
-        : "RET-2048";
 
-    const outcomeMessages: Record<string, { agent: string; user?: string }> = {
-      approved: { agent: "✅ **Return approved!** Your request has been accepted. You'll receive return instructions by email shortly." },
-      "more-info": { agent: "📸 We need one more thing — a photo of the issue. I'll redirect you to provide more information." },
-      "not-eligible": { agent: "❌ This return is outside the eligible return window or policy. I'll show you the full details." },
-      "RET-2048": { agent: "🔍 This return has been sent to the seller for manual review. You'll be notified once they make a decision." },
-    };
-    const outcomeMsg = outcomeMessages[target] ?? outcomeMessages["RET-2048"];
-    addMessage("agent", outcomeMsg.agent);
-    setTimeout(() => {
-      router.push(`/returns/${target}?order=${order.id}&resolution=${resolution}`);
-    }, 2200);
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = (await response.json().catch(() => null)) as { outcome?: string } | null;
+
+      // Small natural delay so user gets standard feedback
+      await new Promise((r) => setTimeout(r, 900));
+
+      setLoading(false);
+      setStep("done");
+
+      const target =
+        result?.outcome === "APPROVED"
+          ? "approved"
+          : result?.outcome === "MORE_INFO_REQUIRED"
+          ? "more-info"
+          : result?.outcome === "NOT_ELIGIBLE"
+          ? "not-eligible"
+          : "review";
+
+      const outcomeMessages: Record<string, string> = {
+        approved:
+          "✅ **Return approved!** Your return request has been authorized. A prepaid return shipping label and packing instructions have been sent to your email.",
+        "more-info":
+          "📸 **Additional details needed:** Please upload a clear photo of the item so we can complete your return review.",
+        "not-eligible":
+          "ℹ️ **Notice:** This purchase is outside our standard 30-day return window. If you need any assistance, our customer support team is here to help.",
+        review:
+          "📋 **Request received!** Your return request has been submitted for review. Our customer care team will email you an update within 24 hours.",
+      };
+
+      const outcomeMsg = outcomeMessages[target] ?? outcomeMessages.review;
+      addMessage("agent", outcomeMsg);
+
+      setTimeout(() => {
+        router.push(`/returns/${target}?order=${order.id}&resolution=${resolution}`);
+      }, 2000);
+    } catch {
+      setLoading(false);
+      setStep("done");
+      addMessage(
+        "agent",
+        "📋 **Request received!** Your return request has been recorded. Our customer care team will follow up via email."
+      );
+      setTimeout(() => {
+        router.push(`/returns/review?order=${order.id}&resolution=${resolution}`);
+      }, 2000);
+    }
   }
 
-  const isInvestigating = step === "investigating";
+  const isSubmitting = step === "submitting" || loading;
 
   return (
     <div className="chat-shell">
@@ -292,9 +324,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
       <div className="chat-messages">
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-bubble-wrap ${msg.from}`}>
-            {msg.from === "agent" && (
-              <div className="chat-avatar">R</div>
-            )}
+            {msg.from === "agent" && <div className="chat-avatar">R</div>}
             <div
               className={`chat-bubble ${msg.from}`}
               dangerouslySetInnerHTML={{
@@ -306,28 +336,16 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
           </div>
         ))}
 
-        {/* Investigation progress */}
-        {isInvestigating && (
-          <div className="investigation-card">
-            <p className="investigation-title">Investigating your return…</p>
-            <div className="investigation-steps">
-              {investigationSteps.map((s, i) => {
-                const done = investigationProgress.includes(i);
-                const active = !done && investigationProgress.length === i;
-                return (
-                  <div
-                    key={s.label}
-                    className={`inv-step ${done ? "done" : active ? "active" : "pending"}`}
-                  >
-                    <span className="inv-icon">
-                      {done ? "✓" : active ? <span className="inv-spinner" /> : "○"}
-                    </span>
-                    <span>{s.label}</span>
-                  </div>
-                );
-              })}
+        {/* Clean, customer-facing loading indicator (replaces internal investigation steps) */}
+        {isSubmitting && (
+          <div className="submitting-card">
+            <div className="submitting-indicator">
+              <span className="submitting-dot" />
+              <span className="submitting-dot" />
+              <span className="submitting-dot" />
             </div>
-            {loading && <p className="inv-finalizing">Finalizing decision…</p>}
+            <p className="submitting-title">Processing your request…</p>
+            <p className="submitting-subtitle">Please wait while we confirm your return details</p>
           </div>
         )}
 
@@ -364,15 +382,23 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
             className="chat-textarea"
             value={customMessage}
             onChange={(e) => setCustomMessage(e.target.value)}
-            placeholder="Add any extra details… (optional)"
+            placeholder="Add any extra details or notes… (optional)"
             rows={2}
           />
           <div className="chat-actions spaced">
-            <button className="chat-btn ghost" onClick={() => { setResolution("refund"); submitMessage(); selectResolution("refund"); }}>
-              💳 Refund
+            <button
+              type="button"
+              className="chat-btn ghost"
+              onClick={() => selectResolution("refund")}
+            >
+              💳 Refund to original payment
             </button>
-            <button className="chat-btn ghost" onClick={() => { setResolution("exchange"); submitMessage(); selectResolution("exchange"); }}>
-              🔄 Exchange
+            <button
+              type="button"
+              className="chat-btn ghost"
+              onClick={() => selectResolution("exchange")}
+            >
+              🔄 Exchange for another size
             </button>
           </div>
         </div>
@@ -390,28 +416,35 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
             />
             {!hasEvidence ? (
               <button
+                type="button"
                 className="chat-btn primary"
                 onClick={() => fileRef.current?.click()}
                 disabled={uploadingEvidence}
               >
-                {uploadingEvidence ? "Uploading…" : "📷 Upload photo"}
+                {uploadingEvidence ? "Uploading photo…" : "📷 Attach photo"}
               </button>
             ) : (
               <div className="evidence-added">
-                <span>📷 Photo added ✓</span>
+                <span>📷 Photo attached ✓</span>
               </div>
             )}
             {evidenceMessage && <p className="evidence-status">{evidenceMessage}</p>}
           </div>
           <div className="chat-actions spaced">
             <button
+              type="button"
               className="chat-btn primary"
               onClick={submitEvidence}
               disabled={uploadingEvidence}
             >
-              Continue →
+              Submit request →
             </button>
-            <button className="chat-btn ghost small" onClick={skipEvidence}>
+            <button
+              type="button"
+              className="chat-btn ghost small"
+              onClick={skipEvidence}
+              disabled={uploadingEvidence}
+            >
               Skip photo
             </button>
           </div>

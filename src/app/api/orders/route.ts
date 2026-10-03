@@ -8,6 +8,7 @@ type CartItem = {
   price: number;
   size: string;
   quantity: number;
+  image?: string;
 };
 
 export async function POST(request: Request) {
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
   for (const item of body.items) {
     const { data: existingProduct } = await supabase
       .from("products")
-      .select("id")
+      .select("id, image_url")
       .eq("name", item.name)
       .eq("store_id", storeId)
       .maybeSingle();
@@ -57,10 +58,19 @@ export async function POST(request: Request) {
     let productId: string;
     if (existingProduct) {
       productId = existingProduct.id;
+      if (item.image && !existingProduct.image_url) {
+        await supabase.from("products").update({ image_url: item.image }).eq("id", existingProduct.id);
+      }
     } else {
       const { data: newProduct, error: productError } = await supabase
         .from("products")
-        .insert({ store_id: storeId, name: item.name, price: item.price, category: "Clothing" })
+        .insert({
+          store_id: storeId,
+          name: item.name,
+          price: item.price,
+          category: "Clothing",
+          image_url: item.image ?? null,
+        })
         .select("id")
         .single();
       if (productError || !newProduct) continue;

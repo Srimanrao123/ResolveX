@@ -61,7 +61,18 @@ export default async function ReturnStatusPage({ params }: { params: Promise<{ i
       REFUNDED: "Your refund is being processed",
       COMPLETED: "Your return is complete",
     };
+    const customerStatusDescriptions: Record<string, string> = {
+      APPROVED: "Your return is approved. We've emailed you a prepaid shipping label and packing instructions.",
+      MORE_INFO_REQUIRED: "Please upload a photo of the item so we can finish reviewing your request.",
+      UNDER_REVIEW: "We have received your return request. Our customer care team is reviewing it and will notify you within 24 hours.",
+      REJECTED: "This purchase is outside our standard 30-day return policy window. Contact customer care if you need further help.",
+      RETURNING: "Your package is currently in transit back to our warehouse.",
+      RECEIVED: "Your return package has arrived safely at our facility.",
+      REFUNDED: "Your refund has been issued to your original payment method.",
+      COMPLETED: "Your return and resolution have been completed.",
+    };
     const title = statusTitle[liveReturn.status] ?? "Your return is being processed";
+    const leadMessage = customerStatusDescriptions[liveReturn.status] ?? "We'll keep you updated as your return progresses.";
     const tone = liveReturn.status === "APPROVED" || liveReturn.status === "COMPLETED" || liveReturn.status === "REFUNDED"
       ? "good"
       : liveReturn.status === "REJECTED"
@@ -75,7 +86,7 @@ export default async function ReturnStatusPage({ params }: { params: Promise<{ i
         <div className={`result-icon ${tone}`}>{icons[tone]}</div>
         <p className={`status-label ${tone}`}>{liveReturn.status.replaceAll("_", " ")}</p>
         <h1>{title}</h1>
-        <p className="lead">{liveReturn.events.at(-1)?.message ?? "We'll keep you updated as your return progresses."}</p>
+        <p className="lead">{leadMessage}</p>
         <section className="timeline">
           {liveReturn.events.map((event, index) => (
             <div className="timeline-step complete" key={`${event.status}-${index}`}>
