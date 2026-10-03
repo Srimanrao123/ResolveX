@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCurrentProfile } from "@/lib/app-auth";
-import { reviewCases, updateDemoCaseStatus } from "@/lib/demo-data";
 import type { ReturnCase } from "@/lib/types";
 
 const decisions = new Set(["approve", "reject", "request_info"]);
@@ -54,17 +53,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         message: `Return ${body.decision.replace("_", " ")}ed successfully.`,
       });
     }
-  }
-
-  const demoFound = reviewCases.some((c) => c.id === id);
-  if (demoFound || id.startsWith("RET-")) {
-    updateDemoCaseStatus(id, targetUiStatus);
-    return NextResponse.json({
-      returnCase: { id, display_id: id, status: update.status },
-      status: targetUiStatus,
-      isDemo: true,
-      message: `Return ${body.decision.replace("_", " ")}ed successfully.`,
-    });
   }
 
   return NextResponse.json({ error: "Return case was not found." }, { status: 404 });

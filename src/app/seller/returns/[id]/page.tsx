@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatPrice, reviewCases } from "@/lib/demo-data";
+import { formatPrice } from "@/lib/demo-data";
 import { CaseActions } from "@/components/case-actions";
 import { AiCaseSummary } from "@/components/ai-case-summary";
 import { getSellerCaseById } from "@/lib/seller-data";
@@ -8,7 +8,19 @@ import { requireSeller } from "@/lib/route-guards";
 export default async function SellerCasePage({ params }: { params: Promise<{ id: string }> }) {
   await requireSeller();
   const { id } = await params;
-  const item = (await getSellerCaseById(id)) ?? reviewCases[0];
+  const item = await getSellerCaseById(id);
+
+  if (!item) {
+    return (
+      <div className="page-shell seller-shell">
+        <Link href="/seller" className="back-link">← Return queue</Link>
+        <div style={{ marginTop: 40, textAlign: "center" }}>
+          <h2>Return case not found</h2>
+          <p style={{ color: "var(--muted)", marginTop: 8 }}>Case {id} does not exist in the database.</p>
+        </div>
+      </div>
+    );
+  }
 
   const riskColors = {
     HIGH: { bg: "#fce8e6", color: "#c0392b" },

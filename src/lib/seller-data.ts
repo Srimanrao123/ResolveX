@@ -1,4 +1,3 @@
-import { reviewCases } from "@/lib/demo-data";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCurrentProfile } from "@/lib/app-auth";
 import type { ReturnCase, RiskLevel } from "@/lib/types";
@@ -43,12 +42,12 @@ function normalize(row: CaseRow, evidenceImageUrl?: string): ReturnCase {
 export async function getSellerCases(): Promise<{ cases: ReturnCase[]; isDemo: boolean }> {
   const supabase = getSupabaseAdminClient();
   const user = await getCurrentProfile();
-  if (!supabase || user?.role !== "seller") return { cases: reviewCases, isDemo: true };
+  if (!supabase || user?.role !== "seller") return { cases: [], isDemo: false };
   const { data, error } = await supabase
     .from("return_cases")
     .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type)")
     .order("created_at", { ascending: false });
-  if (error || !data?.length) return { cases: reviewCases, isDemo: true };
+  if (error || !data?.length) return { cases: [], isDemo: false };
 
   const rows = data as unknown as CaseRow[];
   const cases = await Promise.all(
@@ -69,31 +68,27 @@ export async function getSellerCases(): Promise<{ cases: ReturnCase[]; isDemo: b
 }
 
 export async function getSellerCaseById(id: string): Promise<ReturnCase | null> {
-  const { cases } = await getSellerCases();
-  const found = cases.find((c) => c.id === id);
-  if (found) return found;
-
   const supabase = getSupabaseAdminClient();
-  if (supabase) {
-    const { data } = await supabase
-      .from("return_cases")
-      .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type)")
-      .or(`display_id.eq.${id},id.eq.${id}`)
-      .maybeSingle();
+  if (!supabase) return null;
 
-    if (data) {
-      const row = data as unknown as CaseRow;
-      let evidenceImageUrl: string | undefined;
-      const storagePath = row.return_evidence?.[0]?.storage_path;
-      if (storagePath) {
-        const { data: signed } = await supabase.storage.from("return-evidence").createSignedUrl(storagePath, 3600);
-        evidenceImageUrl = signed?.signedUrl;
-      }
-      return normalize(row, evidenceImageUrl);
+  const { data } = await supabase
+    .from("return_cases")
+    .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type)")
+    .or(`display_id.eq.${id},id.eq.${id}`)
+    .maybeSingle();
+
+  if (data) {
+    const row = data as unknown as CaseRow;
+    let evidenceImageUrl: string | undefined;
+    const storagePath = row.return_evidence?.[0]?.storage_path;
+    if (storagePath) {
+      const { data: signed } = await supabase.storage.from("return-evidence").createSignedUrl(storagePath, 3600);
+      evidenceImageUrl = signed?.signedUrl;
     }
+    return normalize(row, evidenceImageUrl);
   }
 
-  return reviewCases.find((c) => c.id === id) ?? null;
+  return null;
 }
 
 export function getDashboardMetrics(cases: ReturnCase[]) {

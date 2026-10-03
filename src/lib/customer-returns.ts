@@ -1,6 +1,5 @@
 import { getCurrentProfile } from "@/lib/app-auth";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { reviewCases } from "@/lib/demo-data";
 
 export type CustomerReturnCaseItem = {
   id: string;
@@ -101,22 +100,6 @@ export async function getCustomerReturnForOrder(orderId: string, orderItemId?: s
       .limit(1)
       .maybeSingle();
     if (byOrder) return byOrder;
-  }
-
-  // Demo fallback
-  const demoCase = reviewCases.find(
-    (c) => c.orderId === orderId || (orderItemId && c.id === orderItemId)
-  );
-  if (demoCase) {
-    return {
-      id: demoCase.id,
-      display_id: demoCase.id,
-      status: demoCase.status === "Approved" ? "APPROVED" : "UNDER_REVIEW",
-      outcome: demoCase.status === "Approved" ? "APPROVED" : "SELLER_REVIEW",
-      risk_level: demoCase.risk,
-      policy_result: demoCase.policy,
-      created_at: new Date().toISOString(),
-    };
   }
 
   return null;

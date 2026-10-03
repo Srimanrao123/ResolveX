@@ -83,25 +83,33 @@ export default async function SellerDashboard() {
               </tr>
             </thead>
             <tbody>
-              {cases.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <strong>{item.id}</strong>
-                    <span>{item.product} · {formatPrice(item.amount)}</span>
-                  </td>
-                  <td>{item.customer}</td>
-                  <td>{item.reason}</td>
-                  <td>
-                    <span className={`risk ${item.risk.toLowerCase()}`}>{item.risk}</span>
-                  </td>
-                  <td>{item.status}</td>
-                  <td>
-                    <Link className="text-link" href={`/seller/returns/${item.id}`}>
-                      Open →
-                    </Link>
+              {cases.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "40px 16px", color: "var(--muted)" }}>
+                    No return cases yet. Returns submitted by customers will appear here in real time.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                cases.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <strong>{item.id}</strong>
+                      <span>{item.product} · {formatPrice(item.amount)}</span>
+                    </td>
+                    <td>{item.customer}</td>
+                    <td>{item.reason}</td>
+                    <td>
+                      <span className={`risk ${item.risk.toLowerCase()}`}>{item.risk}</span>
+                    </td>
+                    <td>{item.status}</td>
+                    <td>
+                      <Link className="text-link" href={`/seller/returns/${item.id}`}>
+                        Open →
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

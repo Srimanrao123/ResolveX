@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatPrice, reviewCases } from "@/lib/demo-data";
+import { formatPrice } from "@/lib/demo-data";
 import { getCustomerOrders } from "@/lib/orders";
 import { requireCustomer } from "@/lib/route-guards";
 import { getCustomerReturnCases } from "@/lib/customer-returns";
@@ -23,22 +23,19 @@ export default async function OrdersPage() {
 
       <div className="order-list">
         {orders.map((order) => {
-          // Check if an existing return case exists for this item or order
-          const existingReturn =
-            returnCases.find(
-              (rc) =>
-                (order.orderItemId && rc.orderItemId === order.orderItemId) ||
-                (rc.orderDisplayId && rc.orderDisplayId === order.id)
-            ) ??
-            reviewCases.find((c) => c.orderId === order.id);
+          // Check if an existing return case exists for this item or order from database
+          const existingReturn = returnCases.find(
+            (rc) =>
+              (order.orderItemId && rc.orderItemId === order.orderItemId) ||
+              (rc.orderDisplayId && rc.orderDisplayId === order.id)
+          );
 
-          const returnStatus =
-            existingReturn && "status" in existingReturn
-              ? existingReturn.status.replaceAll("_", " ")
-              : null;
+          const returnStatus = existingReturn
+            ? existingReturn.status.replaceAll("_", " ")
+            : null;
 
           const returnUrl = existingReturn
-            ? `/returns/${"displayId" in existingReturn ? existingReturn.displayId : existingReturn.id}`
+            ? `/returns/${existingReturn.displayId}`
             : `/returns/new?order=${order.id}${order.orderItemId ? `&item=${order.orderItemId}` : ""}`;
 
           return (
@@ -65,7 +62,16 @@ export default async function OrdersPage() {
               <div className="order-action">
                 <strong>{formatPrice(order.price)}</strong>
                 {existingReturn ? (
-                  <span className="status warm" style={{ fontSize: 12, padding: "4px 10px" }}>
+                  <span
+                    className={`status ${
+                      existingReturn.status === "APPROVED" || existingReturn.status === "COMPLETED" || existingReturn.status === "REFUNDED"
+                        ? "good"
+                        : existingReturn.status === "REJECTED"
+                        ? "bad"
+                        : "warm"
+                    }`}
+                    style={{ fontSize: 12, padding: "4px 10px" }}
+                  >
                     Return: {returnStatus}
                   </span>
                 ) : (
