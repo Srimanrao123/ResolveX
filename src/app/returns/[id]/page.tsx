@@ -39,7 +39,7 @@ export default async function ReturnStatusPage({
 
     const customerStatusDescriptions: Record<string, string> = {
       APPROVED:
-        "Your return request has been authorized. A prepaid return shipping label and packing instructions have been generated for you.",
+        "Your return request has been authorized. Pack the item securely and follow the return instructions provided by the seller.",
       MORE_INFO_REQUIRED:
         "Please provide additional photos or details of the item so our care team can complete your return review.",
       UNDER_REVIEW:
@@ -51,7 +51,7 @@ export default async function ReturnStatusPage({
       RECEIVED:
         "Your return package has arrived safely at our inspection facility.",
       REFUNDED:
-        "Your refund has been approved and issued to your original payment method.",
+        "Your refund has been recorded as issued. Check your original payment method for the provider's processing time.",
       COMPLETED:
         "Your return and resolution have been successfully completed.",
     };
@@ -169,7 +169,7 @@ export default async function ReturnStatusPage({
                 <strong>Pack your item:</strong> Place the item in its original box or secure packaging with all tags attached.
               </li>
               <li>
-                <strong>Print prepaid shipping label:</strong> Affix the return label securely to the outside of your package.
+                <strong>Use your seller-provided shipping instructions:</strong> This app does not generate a courier label.
               </li>
               <li>
                 <strong>Drop off or doorstep pickup:</strong> Hand over to any authorized courier partner.
@@ -181,7 +181,7 @@ export default async function ReturnStatusPage({
                 productName={liveReturn.productName}
                 orderId={liveReturn.orderDisplayId ?? undefined}
               />
-              <span style={{ fontSize: "12.5px", color: "var(--muted)" }}>Prepaid return label covered by seller</span>
+              <span style={{ fontSize: "12.5px", color: "var(--muted)" }}>Packing checklist only — shipping method is confirmed by the seller</span>
             </div>
           </div>
         )}
@@ -226,6 +226,13 @@ export default async function ReturnStatusPage({
             );
           })}
         </section>
+
+        {liveReturn.sellerDecisionNote && (
+          <section className="case-section" style={{ textAlign: "left" }}>
+            <h2>Seller update</h2>
+            <p>{liveReturn.sellerDecisionNote}</p>
+          </section>
+        )}
 
         {/* Detailed event log if any */}
         {liveReturn.events && liveReturn.events.length > 0 && (

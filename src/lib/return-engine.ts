@@ -18,23 +18,28 @@ export type ReturnEvaluation = {
   reasons: string[];
 };
 
+export function needsItemComparison(reason: ReturnReason) {
+  return reason === "WRONG_ITEM" || reason === "NOT_AS_EXPECTED";
+}
+
 export function evaluateReturn(input: ReturnEvaluationInput): ReturnEvaluation {
   const now = input.now ?? new Date();
   const daysSinceDelivery = Math.floor((now.getTime() - input.deliveredAt.getTime()) / 86_400_000);
   const isDamageClaim = input.reason === "DAMAGED" || input.reason === "DEFECTIVE";
+  const requiresVisualEvidence = isDamageClaim || needsItemComparison(input.reason);
 
   if (input.isFinalSale || daysSinceDelivery > 30) {
     return { outcome: "NOT_ELIGIBLE", riskLevel: "LOW", reasons: [input.isFinalSale ? "This item is final sale." : "This request is outside the 30-day return window."] };
   }
-  if (isDamageClaim && !input.hasEvidence) {
-    return { outcome: "MORE_INFO_REQUIRED", riskLevel: "LOW", reasons: ["Please upload a photo showing the damaged or defective area."] };
+  if (requiresVisualEvidence && !input.hasEvidence) {
+    return { outcome: "MORE_INFO_REQUIRED", riskLevel: "LOW", reasons: ["Please upload a clear photo of the item so we can review this return request."] };
   }
 
   const riskSignals: string[] = [];
   if (input.recentReturns >= 3) riskSignals.push("Customer has 3 or more recent returns.");
   if (input.recentDamageClaims >= 2) riskSignals.push("Customer has repeated damage-related claims.");
   if (input.amount > 5000) riskSignals.push("Order value is above the auto-approval threshold.");
-  if (isDamageClaim && input.evidenceAssessment !== "yes") riskSignals.push("Evidence does not clearly support the claim.");
+  if (requiresVisualEvidence && input.evidenceAssessment !== "yes") riskSignals.push("Photo evidence does not clearly support the claim.");
   if (riskSignals.length > 0) {
     return { outcome: "SELLER_REVIEW", riskLevel: riskSignals.length >= 2 ? "HIGH" : "MEDIUM", reasons: riskSignals };
   }

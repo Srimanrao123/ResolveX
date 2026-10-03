@@ -32,7 +32,9 @@ export async function getCustomerReturn(idOrDisplayId: string) {
       policy_result,
       requested_resolution,
       customer_message,
+      seller_decision_note,
       created_at,
+      refunds ( status ),
       order_item:order_items (
         unit_price,
         product:products ( name, image_url ),
@@ -61,6 +63,8 @@ export async function getCustomerReturn(idOrDisplayId: string) {
     orderDisplayId: item?.order?.display_id ?? null,
     amount: item?.unit_price ? Number(item.unit_price) : null,
     events: events ?? [],
+    sellerDecisionNote: returnCase.seller_decision_note ?? null,
+    refundStatus: (returnCase.refunds as unknown as { status?: string }[] | null)?.[0]?.status ?? null,
   };
 }
 

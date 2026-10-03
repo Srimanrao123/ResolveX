@@ -22,20 +22,28 @@ export function ReturnForm({ order }: { order: DemoOrder }) {
   const [evidenceMessage, setEvidenceMessage] = useState("");
   const [uploadingEvidence, setUploadingEvidence] = useState(false);
   const [loading, setLoading] = useState(false);
-  const needsEvidence = useMemo(() => reason === "DAMAGED" || reason === "DEFECTIVE", [reason]);
+  const needsEvidence = useMemo(() => ["DAMAGED", "DEFECTIVE", "WRONG_ITEM", "NOT_AS_EXPECTED"].includes(reason), [reason]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setLoading(true);
     const endpoint = order.orderItemId ? "/api/returns" : "/api/returns/evaluate";
     let assessment: "yes" | "no" | "unclear" | undefined = hasEvidence ? "unclear" : undefined;
+    let evidenceObservation: string | undefined;
+    let imageComparison: string | undefined;
+    let aiSource: string | undefined;
+    let aiModel: string | undefined;
     if (order.orderItemId && evidencePath && evidenceContentType && needsEvidence) {
-      const reviewed = await fetch("/api/returns/evidence-review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ evidencePath, contentType: evidenceContentType, reason }) });
-      const review = await reviewed.json().catch(() => null) as { supportsClaim?: "yes" | "no" | "unclear" } | null;
+      const reviewed = await fetch("/api/returns/evidence-review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ evidencePath, contentType: evidenceContentType, reason, orderItemId: order.orderItemId }) });
+      const review = await reviewed.json().catch(() => null) as { supportsClaim?: "yes" | "no" | "unclear"; observation?: string; comparison?: string; source?: string; model?: string } | null;
       assessment = review?.supportsClaim ?? "unclear";
+      evidenceObservation = review?.observation;
+      imageComparison = review?.comparison;
+      aiSource = review?.source;
+      aiModel = review?.model;
     }
     const payload = order.orderItemId ? {
       orderItemId: order.orderItemId, reason, requestedResolution: resolution, hasEvidence,
-      evidenceAssessment: assessment, evidencePath, evidenceContentType, customerMessage: message
+      evidenceAssessment: assessment, evidenceObservation, imageComparison, aiSource, aiModel, evidencePath, evidenceContentType, customerMessage: message
     } : {
       deliveredAt: order.deliveredAt, amount: order.price, reason, hasEvidence,
       evidenceAssessment: assessment,
@@ -72,7 +80,7 @@ export function ReturnForm({ order }: { order: DemoOrder }) {
     <label><span>Why are you returning this?</span><select value={reason} onChange={event => setReason(event.target.value as ReturnReason)}>{reasons.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
     <label><span>Tell us a little more <i>(optional)</i></span><textarea value={message} onChange={event => setMessage(event.target.value)} placeholder="For example: The fit around the shoulders is too tight." rows={4} /></label>
     <fieldset><legend>What would you prefer?</legend><div className="choice-row"><label><input checked={resolution === "refund"} onChange={() => setResolution("refund")} name="resolution" type="radio" /> Refund</label><label><input checked={resolution === "exchange"} onChange={() => setResolution("exchange")} name="resolution" type="radio" /> Exchange</label></div></fieldset>
-    {needsEvidence && <section className="evidence-box"><strong>Add a photo of the issue</strong><p>A photo helps us review damage and defect claims faster.</p><label className="upload"><input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => addEvidence(event.target.files?.[0])} />{uploadingEvidence ? "Uploading…" : hasEvidence ? "Photo added ✓" : "Choose photo"}</label>{evidenceMessage && <p className="evidence-message">{evidenceMessage}</p>}</section>}
+    {needsEvidence && <section className="evidence-box"><strong>Add a photo of the item</strong><p>For an issue or incorrect item, this lets us review the evidence and compare it with the catalog when relevant.</p><label className="upload"><input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => addEvidence(event.target.files?.[0])} />{uploadingEvidence ? "Uploading…" : hasEvidence ? "Photo added ✓" : "Choose photo"}</label>{evidenceMessage && <p className="evidence-message">{evidenceMessage}</p>}</section>}
     <button className="button primary full" disabled={loading || uploadingEvidence}>{loading ? "Checking your return…" : "Continue"}</button>
   </form>;
 }

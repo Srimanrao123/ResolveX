@@ -53,7 +53,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const needsEvidence = reason === "DAMAGED" || reason === "DEFECTIVE";
+  const needsEvidence = reason === "DAMAGED" || reason === "DEFECTIVE" || reason === "WRONG_ITEM" || reason === "NOT_AS_EXPECTED";
 
   function addMessage(from: "agent" | "user", text: string) {
     setMessages((prev) => [...prev, { id: uid(), from, text }]);
@@ -163,7 +163,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
       setTimeout(() => {
         addMessage(
           "agent",
-          "Since you reported a damage or defect, please attach a clear photo of the item if possible. This helps us expedite your request."
+          "Please attach a clear photo of the item. This helps us assess the issue and, where relevant, compare it with the catalog item."
         );
         setStep("evidence");
       }, 600);
@@ -232,16 +232,24 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
     setLoading(true);
     const endpoint = order.orderItemId ? "/api/returns" : "/api/returns/evaluate";
     let assessment: "yes" | "no" | "unclear" | undefined = evidence ? "unclear" : undefined;
+    let evidenceObservation: string | undefined;
+    let imageComparison: string | undefined;
+    let aiSource: string | undefined;
+    let aiModel: string | undefined;
 
     if (order.orderItemId && evidencePath && evidenceContentType && needsEvidence) {
       try {
         const reviewed = await fetch("/api/returns/evidence-review", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ evidencePath, contentType: evidenceContentType, reason }),
+          body: JSON.stringify({ evidencePath, contentType: evidenceContentType, reason, orderItemId: order.orderItemId }),
         });
-        const review = (await reviewed.json().catch(() => null)) as { supportsClaim?: "yes" | "no" | "unclear" } | null;
+        const review = (await reviewed.json().catch(() => null)) as { supportsClaim?: "yes" | "no" | "unclear"; observation?: string; comparison?: string; source?: string; model?: string } | null;
         assessment = review?.supportsClaim ?? "unclear";
+        evidenceObservation = review?.observation;
+        imageComparison = review?.comparison;
+        aiSource = review?.source;
+        aiModel = review?.model;
       } catch {
         assessment = "unclear";
       }
@@ -258,6 +266,10 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
           requestedResolution: resolution,
           hasEvidence: evidence,
           evidenceAssessment: assessment,
+          evidenceObservation,
+          imageComparison,
+          aiSource,
+          aiModel,
           evidencePath,
           evidenceContentType,
           customerMessage: compiledMessage || undefined,
@@ -313,13 +325,13 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
 
       const outcomeMessages: Record<string, string> = {
         approved:
-          "✅ **Return approved!** Your return request has been authorized. A prepaid return shipping label and packing instructions have been generated for you.",
+          "✅ **Return approved!** Your return request has been authorized. View the case for the next packing and seller-provided shipping steps.",
         "more-info":
           "📸 **Additional details needed:** Please upload a clear photo of the item so we can complete your return review.",
         "not-eligible":
           "ℹ️ **Notice:** This purchase is outside our standard 30-day return window. If you need any assistance, our customer support team is here to help.",
         review:
-          "📋 **Request received!** Your return request has been submitted for review. Our customer care team will email you an update within 24 hours.",
+          "📋 **Request received!** Your return request has been submitted for review. Check your return status for updates.",
       };
 
       const outcomeMsg = outcomeMessages[target] ?? outcomeMessages.review;

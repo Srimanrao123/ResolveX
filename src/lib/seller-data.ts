@@ -13,13 +13,19 @@ type CaseRow = {
   evidence_assessment: string | null;
   customer_message?: string | null;
   requested_resolution?: string | null;
+  decision_reasons?: string[] | null;
+  ai_evidence_observation?: string | null;
+  ai_evidence_source?: string | null;
+  image_comparison?: { result?: string } | null;
+  seller_decision_note?: string | null;
+  refunds?: { status: string }[] | null;
   customer: { full_name: string | null } | null;
   item: { unit_price: number; product: { name: string } | null; order: { display_id: string } | null } | null;
   return_evidence?: { storage_path: string; mime_type: string }[] | null;
 };
 
 function normalize(row: CaseRow, evidenceImageUrl?: string): ReturnCase {
-  const statusMap: Record<string, ReturnCase["status"]> = { APPROVED: "Approved", MORE_INFO_REQUIRED: "More info", REJECTED: "Not eligible", UNDER_REVIEW: "Needs review" };
+  const statusMap: Record<string, ReturnCase["status"]> = { APPROVED: "Approved", MORE_INFO_REQUIRED: "More info", REJECTED: "Not eligible", UNDER_REVIEW: "Needs review", RETURNING: "Returning", RECEIVED: "Received", REFUNDED: "Refunded" };
   return {
     id: row.display_id,
     orderId: row.item?.order?.display_id ?? "—",
@@ -30,12 +36,18 @@ function normalize(row: CaseRow, evidenceImageUrl?: string): ReturnCase {
     status: statusMap[row.status] ?? "Needs review",
     risk: row.risk_level,
     policy: row.policy_result === "Not eligible" ? "Not eligible" : "Eligible",
-    history: "Return history is available in the case review.",
-    evidence: row.evidence_assessment || "No evidence assessment available.",
-    recommendation: row.ai_summary || "Review the policy result, evidence, and return history before deciding.",
+    history: "Customer return history was evaluated during the policy check.",
+    evidence: row.ai_evidence_observation || row.evidence_assessment || "No photo evidence assessment available.",
+    recommendation: row.ai_summary || (row.decision_reasons?.join(" ") ?? "Review the policy result and customer evidence before deciding."),
     evidenceImageUrl,
     customerMessage: row.customer_message || undefined,
     requestedResolution: row.requested_resolution || undefined,
+    decisionReasons: row.decision_reasons ?? [],
+    evidenceObservation: row.ai_evidence_observation ?? undefined,
+    evidenceSource: row.ai_evidence_source ?? undefined,
+    imageComparison: row.image_comparison?.result,
+    sellerDecisionNote: row.seller_decision_note ?? undefined,
+    refundStatus: row.refunds?.[0]?.status,
   };
 }
 
@@ -45,7 +57,7 @@ export async function getSellerCases(): Promise<{ cases: ReturnCase[]; isDemo: b
   if (!supabase || user?.role !== "seller") return { cases: [], isDemo: false };
   const { data, error } = await supabase
     .from("return_cases")
-    .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type)")
+    .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, decision_reasons, ai_evidence_observation, ai_evidence_source, image_comparison, seller_decision_note, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type), refunds(status)")
     .order("created_at", { ascending: false });
   if (error || !data?.length) return { cases: [], isDemo: false };
 
@@ -74,7 +86,7 @@ export async function getSellerCaseById(id: string): Promise<ReturnCase | null> 
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   const query = supabase
     .from("return_cases")
-    .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type)");
+    .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, decision_reasons, ai_evidence_observation, ai_evidence_source, image_comparison, seller_decision_note, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type), refunds(status)");
   const { data } = await (isUuid ? query.eq("id", id) : query.eq("display_id", id)).maybeSingle();
 
   if (data) {

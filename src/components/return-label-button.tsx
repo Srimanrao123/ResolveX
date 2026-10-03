@@ -19,10 +19,10 @@ export function PrintReturnLabelButton({
       onClick={handlePrint}
       className="button primary"
       style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
-      title="Print return shipping label and packing slip"
+      title="Print return packing checklist"
     >
       <span>📄</span>
-      <span>Print Return Label & Slip</span>
+      <span>Print packing checklist</span>
     </button>
   );
 }

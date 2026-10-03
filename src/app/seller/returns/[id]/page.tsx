@@ -49,12 +49,17 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
 
       <div className="case-layout">
         <div className="case-main">
-          {/* AI Recommendation */}
+          {/* Decision explanation */}
           <section className="case-section">
-            <h2>AI recommendation</h2>
+            <h2>Decision explanation</h2>
             <div className="recommendation">
-              <strong>Seller review recommended</strong>
+              <strong>{item.status}</strong>
               <p>{item.recommendation}</p>
+              {item.decisionReasons?.length ? (
+                <ul style={{ margin: "12px 0 0", paddingLeft: 20 }}>
+                  {item.decisionReasons.map((reason) => <li key={reason}>{reason}</li>)}
+                </ul>
+              ) : null}
             </div>
           </section>
 
@@ -63,7 +68,7 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
             product={item.product}
             reason={item.reason}
             policyResult={item.policy}
-            riskSignals={item.history.split(" · ")}
+            riskSignals={item.decisionReasons ?? []}
             evidenceAssessment={item.evidence}
             recommendation={item.recommendation}
           />
@@ -75,7 +80,7 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
               <div>
                 <span>Policy check</span>
                 <strong className="good-text">{item.policy}</strong>
-                <p>Within the 30-day return window</p>
+                <p>{item.policy === "Eligible" ? "Eligible under the configured return policy" : "Not eligible under the configured return policy"}</p>
               </div>
               <div>
                 <span>Customer history</span>
@@ -87,8 +92,22 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
                 <strong>{item.evidence.toLowerCase().includes("no evidence") ? "Not Required" : "Evaluated"}</strong>
                 <p>{item.evidence}</p>
               </div>
+              {item.imageComparison && item.imageComparison !== "not_applicable" ? (
+                <div>
+                  <span>Catalog photo comparison</span>
+                  <strong>{item.imageComparison === "mismatch" ? "Mismatch found" : item.imageComparison === "match" ? "Appears to match" : "Inconclusive"}</strong>
+                  <p>Claude compared the catalog image with the customer-uploaded item photo.</p>
+                </div>
+              ) : null}
             </div>
           </section>
+
+          {item.sellerDecisionNote && (
+            <section className="case-section">
+              <h2>Seller decision note</h2>
+              <p>{item.sellerDecisionNote}</p>
+            </section>
+          )}
 
           {/* Customer request */}
           <section className="case-section">
@@ -156,6 +175,10 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
             <span>Risk level</span>
             <strong style={{ color: rc.color }}>{item.risk}</strong>
           </section>
+          {item.refundStatus && <section>
+            <span>Refund workflow</span>
+            <strong>{item.refundStatus.replaceAll("_", " ")}</strong>
+          </section>}
           <section style={{ borderBottom: 0 }}>
             <CaseActions returnId={item.id} currentStatus={item.status} />
           </section>

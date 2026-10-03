@@ -36,7 +36,7 @@ export type ReturnCase = {
   product: string;
   amount: number;
   reason: string;
-  status: "Needs review" | "Approved" | "More info" | "Not eligible";
+  status: "Needs review" | "Approved" | "More info" | "Not eligible" | "Returning" | "Received" | "Refunded";
   risk: RiskLevel;
   policy: "Eligible" | "Not eligible";
   history: string;
@@ -45,4 +45,10 @@ export type ReturnCase = {
   evidenceImageUrl?: string;
   customerMessage?: string;
   requestedResolution?: string;
+  decisionReasons?: string[];
+  evidenceObservation?: string;
+  evidenceSource?: string;
+  imageComparison?: string;
+  sellerDecisionNote?: string;
+  refundStatus?: string;
 };
