@@ -279,12 +279,27 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const result = (await response.json().catch(() => null)) as { outcome?: string } | null;
+      const result = (await response.json().catch(() => null)) as {
+        outcome?: string;
+        id?: string;
+        displayId?: string;
+        error?: string;
+      } | null;
 
       // Small natural delay so user gets standard feedback
       await new Promise((r) => setTimeout(r, 900));
 
       setLoading(false);
+
+      if (!response.ok || result?.error) {
+        setStep("resolution");
+        addMessage(
+          "agent",
+          `⚠️ ${result?.error ?? "We couldn't process your return request. Please try again or check your orders."}`
+        );
+        return;
+      }
+
       setStep("done");
 
       const target =
@@ -298,7 +313,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
 
       const outcomeMessages: Record<string, string> = {
         approved:
-          "✅ **Return approved!** Your return request has been authorized. A prepaid return shipping label and packing instructions have been sent to your email.",
+          "✅ **Return approved!** Your return request has been authorized. A prepaid return shipping label and packing instructions have been generated for you.",
         "more-info":
           "📸 **Additional details needed:** Please upload a clear photo of the item so we can complete your return review.",
         "not-eligible":
@@ -310,9 +325,13 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
       const outcomeMsg = outcomeMessages[target] ?? outcomeMessages.review;
       addMessage("agent", outcomeMsg);
 
+      const targetUrl = result?.displayId
+        ? `/returns/${result.displayId}`
+        : `/returns/${target}?order=${order.id}&resolution=${resolution}`;
+
       setTimeout(() => {
-        router.push(`/returns/${target}?order=${order.id}&resolution=${resolution}`);
-      }, 2000);
+        router.push(targetUrl);
+      }, 1800);
     } catch {
       setLoading(false);
       setStep("done");
@@ -321,7 +340,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
         "📋 **Request received!** Your return request has been recorded. Our customer care team will follow up via email."
       );
       setTimeout(() => {
-        router.push(`/returns/review?order=${order.id}&resolution=${resolution}`);
+        router.push(`/orders`);
       }, 2000);
     }
   }

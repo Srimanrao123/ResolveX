@@ -47,9 +47,10 @@ export function ReturnForm({ order }: { order: DemoOrder }) {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify(payload)
     });
-    const result = await response.json().catch(() => null) as { outcome?: string } | null;
-    const target = result?.outcome === "APPROVED" ? "approved" : result?.outcome === "MORE_INFO_REQUIRED" ? "more-info" : result?.outcome === "NOT_ELIGIBLE" ? "not-eligible" : "RET-2048";
-    router.push(`/returns/${target}?order=${order.id}&resolution=${resolution}`);
+    const result = (await response.json().catch(() => null)) as { outcome?: string; id?: string; displayId?: string } | null;
+    const target = result?.outcome === "APPROVED" ? "approved" : result?.outcome === "MORE_INFO_REQUIRED" ? "more-info" : result?.outcome === "NOT_ELIGIBLE" ? "not-eligible" : "review";
+    const targetUrl = result?.displayId ? `/returns/${result.displayId}` : `/returns/${target}?order=${order.id}&resolution=${resolution}`;
+    router.push(targetUrl);
   }
 
   async function addEvidence(file?: File) {

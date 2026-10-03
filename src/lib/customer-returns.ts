@@ -14,23 +14,54 @@ export type CustomerReturnCaseItem = {
   orderDisplayId?: string;
 };
 
-export async function getCustomerReturn(displayId: string) {
+export async function getCustomerReturn(idOrDisplayId: string) {
   const profile = await getCurrentProfile();
   const supabase = getSupabaseAdminClient();
   if (!profile || profile.role !== "customer" || !supabase) return null;
-  const { data: returnCase } = await supabase
+
+  const cleanId = idOrDisplayId.trim();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+  const query = supabase
     .from("return_cases")
-    .select("id, display_id, status, outcome, risk_level, policy_result, created_at")
-    .eq("display_id", displayId)
-    .eq("customer_id", profile.id)
-    .maybeSingle();
-  if (!returnCase) return null;
+    .select(`
+      id,
+      display_id,
+      status,
+      outcome,
+      risk_level,
+      policy_result,
+      requested_resolution,
+      customer_message,
+      created_at,
+      order_item:order_items (
+        unit_price,
+        product:products ( name, image_url ),
+        order:orders ( display_id )
+      )
+    `)
+    .eq("customer_id", profile.id);
+
+  const { data: returnCase, error } = await (
+    isUuid ? query.eq("id", cleanId) : query.ilike("display_id", cleanId)
+  ).maybeSingle();
+
+  if (error || !returnCase) return null;
   const { data: events } = await supabase
     .from("return_events")
     .select("status, message, created_at")
     .eq("return_case_id", returnCase.id)
     .order("created_at", { ascending: true });
-  return { ...returnCase, events: events ?? [] };
+
+  const item = (returnCase as any).order_item;
+
+  return {
+    ...returnCase,
+    productName: item?.product?.name ?? "Purchased item",
+    productImage: item?.product?.image_url ?? null,
+    orderDisplayId: item?.order?.display_id ?? null,
+    amount: item?.unit_price ? Number(item.unit_price) : null,
+    events: events ?? [],
+  };
 }
 
 export async function getCustomerReturnCases(): Promise<CustomerReturnCaseItem[]> {
@@ -88,17 +119,25 @@ export async function getCustomerReturnForOrder(orderId: string, orderItemId?: s
       if (data) return data;
     }
 
-    const { data: byOrder } = await supabase
+    const cleanOrder = orderId.trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanOrder);
+    const query = supabase
       .from("return_cases")
       .select(`
         id, display_id, status, outcome, risk_level, policy_result, created_at,
-        order_item:order_items!inner(order:orders!inner(display_id))
+        order_item:order_items!inner(order:orders!inner(id, display_id))
       `)
-      .eq("customer_id", profile.id)
-      .eq("order_item.order.display_id", orderId)
+      .eq("customer_id", profile.id);
+
+    const { data: byOrder } = await (
+      isUuid
+        ? query.eq("order_item.order.id", cleanOrder)
+        : query.ilike("order_item.order.display_id", cleanOrder)
+    )
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
     if (byOrder) return byOrder;
   }
 
