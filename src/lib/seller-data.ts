@@ -4,6 +4,7 @@ import { getCurrentProfile } from "@/lib/app-auth";
 import type { ReturnCase, RiskLevel } from "@/lib/types";
 
 type CaseRow = {
+  id?: string;
   display_id: string;
   reason: string;
   status: string;
@@ -11,11 +12,14 @@ type CaseRow = {
   policy_result: string | null;
   ai_summary: string | null;
   evidence_assessment: string | null;
+  customer_message?: string | null;
+  requested_resolution?: string | null;
   customer: { full_name: string | null } | null;
   item: { unit_price: number; product: { name: string } | null; order: { display_id: string } | null } | null;
+  return_evidence?: { storage_path: string; mime_type: string }[] | null;
 };
 
-function normalize(row: CaseRow): ReturnCase {
+function normalize(row: CaseRow, evidenceImageUrl?: string): ReturnCase {
   const statusMap: Record<string, ReturnCase["status"]> = { APPROVED: "Approved", MORE_INFO_REQUIRED: "More info", REJECTED: "Not eligible", UNDER_REVIEW: "Needs review" };
   return {
     id: row.display_id,
@@ -29,7 +33,10 @@ function normalize(row: CaseRow): ReturnCase {
     policy: row.policy_result === "Not eligible" ? "Not eligible" : "Eligible",
     history: "Return history is available in the case review.",
     evidence: row.evidence_assessment || "No evidence assessment available.",
-    recommendation: row.ai_summary || "Review the policy result, evidence, and return history before deciding."
+    recommendation: row.ai_summary || "Review the policy result, evidence, and return history before deciding.",
+    evidenceImageUrl,
+    customerMessage: row.customer_message || undefined,
+    requestedResolution: row.requested_resolution || undefined,
   };
 }
 
@@ -39,10 +46,51 @@ export async function getSellerCases(): Promise<{ cases: ReturnCase[]; isDemo: b
   if (!supabase || user?.role !== "seller") return { cases: reviewCases, isDemo: true };
   const { data, error } = await supabase
     .from("return_cases")
-    .select("display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id))")
+    .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type)")
     .order("created_at", { ascending: false });
   if (error || !data?.length) return { cases: reviewCases, isDemo: true };
-  return { cases: (data as unknown as CaseRow[]).map(normalize), isDemo: false };
+
+  const rows = data as unknown as CaseRow[];
+  const cases = await Promise.all(
+    rows.map(async (row) => {
+      let evidenceImageUrl: string | undefined;
+      const storagePath = row.return_evidence?.[0]?.storage_path;
+      if (storagePath) {
+        const { data: signed } = await supabase.storage.from("return-evidence").createSignedUrl(storagePath, 3600);
+        if (signed?.signedUrl) {
+          evidenceImageUrl = signed.signedUrl;
+        }
+      }
+      return normalize(row, evidenceImageUrl);
+    })
+  );
+
+  return { cases, isDemo: false };
+}
+
+export async function getSellerCaseById(id: string): Promise<ReturnCase | null> {
+  const { cases } = await getSellerCases();
+  const found = cases.find((c) => c.id === id);
+  if (found) return found;
+
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) return null;
+
+  const { data } = await supabase
+    .from("return_cases")
+    .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type)")
+    .or(`display_id.eq.${id},id.eq.${id}`)
+    .maybeSingle();
+
+  if (!data) return null;
+  const row = data as unknown as CaseRow;
+  let evidenceImageUrl: string | undefined;
+  const storagePath = row.return_evidence?.[0]?.storage_path;
+  if (storagePath) {
+    const { data: signed } = await supabase.storage.from("return-evidence").createSignedUrl(storagePath, 3600);
+    evidenceImageUrl = signed?.signedUrl;
+  }
+  return normalize(row, evidenceImageUrl);
 }
 
 export function getDashboardMetrics(cases: ReturnCase[]) {

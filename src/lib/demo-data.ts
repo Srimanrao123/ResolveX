@@ -12,13 +12,18 @@ export const reviewCases: ReturnCase[] = [
     reason: "Damaged", status: "Needs review", risk: "HIGH", policy: "Eligible",
     history: "5 previous returns · 3 damage-related claims in 60 days",
     evidence: "The uploaded image does not clearly show the claimed damage.",
-    recommendation: "Manual review recommended because repeated damage claims and inconclusive evidence need seller judgment."
+    recommendation: "Manual review recommended because repeated damage claims and inconclusive evidence need seller judgment.",
+    evidenceImageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop",
+    customerMessage: "The sole began peeling away from the side within two days of wearing it.",
+    requestedResolution: "Refund"
   },
   {
     id: "RET-2049", orderId: "TH10284", customer: "Priya Nair", product: "Oversized Cotton T-Shirt", amount: 1499,
     reason: "Too small", status: "Approved", risk: "LOW", policy: "Eligible",
     history: "1 return in the last 6 months", evidence: "No evidence required for size-related return.",
-    recommendation: "Approved automatically. The order is eligible and customer history is normal."
+    recommendation: "Approved automatically. The order is eligible and customer history is normal.",
+    customerMessage: "The medium size fits tighter than expected. Would like an exchange for Large.",
+    requestedResolution: "Exchange"
   }
 ];
 

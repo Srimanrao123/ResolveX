@@ -2,14 +2,13 @@ import Link from "next/link";
 import { formatPrice, reviewCases } from "@/lib/demo-data";
 import { CaseActions } from "@/components/case-actions";
 import { AiCaseSummary } from "@/components/ai-case-summary";
-import { getSellerCases } from "@/lib/seller-data";
+import { getSellerCaseById } from "@/lib/seller-data";
 import { requireSeller } from "@/lib/route-guards";
 
 export default async function SellerCasePage({ params }: { params: Promise<{ id: string }> }) {
   await requireSeller();
   const { id } = await params;
-  const { cases } = await getSellerCases();
-  const item = cases.find((v) => v.id === id) ?? reviewCases[0];
+  const item = (await getSellerCaseById(id)) ?? reviewCases[0];
 
   const riskColors = {
     HIGH: { bg: "#fce8e6", color: "#c0392b" },
@@ -73,7 +72,7 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
               </div>
               <div>
                 <span>Evidence assessment</span>
-                <strong>Inconclusive</strong>
+                <strong>{item.evidence.toLowerCase().includes("no evidence") ? "Not Required" : "Evaluated"}</strong>
                 <p>{item.evidence}</p>
               </div>
             </div>
@@ -83,14 +82,47 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
           <section className="case-section">
             <h2>Customer request</h2>
             <p><strong>Reason:</strong> {item.reason}</p>
-            <p style={{ marginTop: 8 }}>&ldquo;The product arrived in poor condition. I would like a refund.&rdquo;</p>
+            {item.customerMessage ? (
+              <p style={{ marginTop: 8 }}>&ldquo;{item.customerMessage}&rdquo;</p>
+            ) : (
+              <p style={{ marginTop: 8, color: "var(--muted)" }}>No customer message provided.</p>
+            )}
             <div className="evidence-preview">
               <span>Customer evidence</span>
-              <div className="image-placeholder">
-                📷 Uploaded photo
-                <br />
-                <small style={{ color: "var(--muted-2)" }}>Image review via Claude Vision</small>
-              </div>
+              {item.evidenceImageUrl ? (
+                <div className="evidence-image-card">
+                  <a
+                    href={item.evidenceImageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="evidence-image-link"
+                    title="Click to open full resolution in new tab"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.evidenceImageUrl}
+                      alt={`Customer evidence for ${item.id}`}
+                      className="evidence-image-img"
+                    />
+                  </a>
+                  <div className="evidence-image-meta">
+                    <span>Uploaded photo evidence</span>
+                    <a
+                      href={item.evidenceImageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open full resolution ↗
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="image-placeholder">
+                  📷 No photo evidence uploaded
+                  <br />
+                  <small style={{ color: "var(--muted-2)" }}>Customer proceeded without attaching photos</small>
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -102,7 +134,7 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
           </section>
           <section>
             <span>Requested resolution</span>
-            <strong>Refund</strong>
+            <strong>{item.requestedResolution ? (item.requestedResolution.charAt(0).toUpperCase() + item.requestedResolution.slice(1)) : "Refund"}</strong>
           </section>
           <section>
             <span>Return status</span>

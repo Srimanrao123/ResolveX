@@ -39,4 +39,7 @@ export type ReturnCase = {
   history: string;
   evidence: string;
   recommendation: string;
+  evidenceImageUrl?: string;
+  customerMessage?: string;
+  requestedResolution?: string;
 };
