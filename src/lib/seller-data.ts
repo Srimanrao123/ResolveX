@@ -71,11 +71,11 @@ export async function getSellerCaseById(id: string): Promise<ReturnCase | null> 
   const supabase = getSupabaseAdminClient();
   if (!supabase) return null;
 
-  const { data } = await supabase
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  const query = supabase
     .from("return_cases")
-    .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type)")
-    .or(`display_id.eq.${id},id.eq.${id}`)
-    .maybeSingle();
+    .select("id, display_id, reason, status, risk_level, policy_result, ai_summary, evidence_assessment, customer_message, requested_resolution, customer:profiles(full_name), item:order_items(unit_price, product:products(name), order:orders(display_id)), return_evidence(storage_path, mime_type)");
+  const { data } = await (isUuid ? query.eq("id", id) : query.eq("display_id", id)).maybeSingle();
 
   if (data) {
     const row = data as unknown as CaseRow;

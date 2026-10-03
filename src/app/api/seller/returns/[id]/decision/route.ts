@@ -34,10 +34,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const supabase = getSupabaseAdminClient();
 
   if (supabase) {
-    const { data: returnCase, error } = await supabase
-      .from("return_cases")
-      .update(update)
-      .or(`display_id.eq.${id},id.eq.${id}`)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const query = supabase.from("return_cases").update(update);
+    const { data: returnCase, error } = await (
+      isUuid ? query.eq("id", id) : query.eq("display_id", id)
+    )
       .select("id, display_id, status")
       .maybeSingle();
 

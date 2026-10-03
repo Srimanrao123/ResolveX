@@ -31,14 +31,16 @@ export async function PATCH(
     delivered_at: newStatus === "DELIVERED" ? new Date().toISOString() : null,
   };
 
-  const { data: updatedOrder, error } = await supabase
-    .from("orders")
-    .update(updateData)
-    .or(`display_id.eq.${id},id.eq.${id}`)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  const query = supabase.from("orders").update(updateData);
+  const { data: updatedOrder, error } = await (
+    isUuid ? query.eq("id", id) : query.eq("display_id", id)
+  )
     .select("id, display_id, status, delivered_at")
     .maybeSingle();
 
   if (error || !updatedOrder) {
+    console.error("Order status update error:", error);
     return NextResponse.json({ error: "Order not found." }, { status: 404 });
   }
 
