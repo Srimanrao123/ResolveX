@@ -15,15 +15,18 @@ export type ReturnOutcome =
   | "NOT_ELIGIBLE";
 
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
+export type OrderStatus = "ORDERED" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 export type DemoOrder = {
   id: string;
+  orderDbId?: string;
   orderItemId?: string;
   product: string;
   price: number;
-  deliveredAt: string;
+  deliveredAt: string | null;
+  createdAt?: string;
   image: string;
-  status: "DELIVERED" | "PROCESSING";
+  status: OrderStatus;
 };
 
 export type ReturnCase = {

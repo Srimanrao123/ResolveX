@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ReturnChat } from "@/components/return-chat";
 import { getCustomerOrders } from "@/lib/orders";
@@ -20,6 +21,25 @@ export default async function NewReturnPage({
 
   if (!order) {
     redirect("/orders");
+  }
+
+  // If order is not delivered yet, tell customer to wait until delivery
+  if (order.status !== "DELIVERED") {
+    return (
+      <div className="page-shell narrow status-page">
+        <p className="eyebrow">ORDER IN TRANSIT</p>
+        <div className="result-icon warm">🚚</div>
+        <p className="status-label warm">{order.status}</p>
+        <h1>Order not delivered yet</h1>
+        <p className="lead">
+          Order #{order.id} for {order.product} is currently {order.status.toLowerCase()}.
+          Returns and exchanges can be initiated once the package has been delivered.
+        </p>
+        <div style={{ marginTop: 24 }}>
+          <Link href="/orders" className="button ghost">← Back to my orders</Link>
+        </div>
+      </div>
+    );
   }
 
   // Check if a return was already initiated for this order/item:

@@ -30,6 +30,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 {profile?.role === "seller" ? (
                   <>
                     <Link href="/seller">Dashboard</Link>
+                    <Link href="/seller/orders">Orders</Link>
                     <Link href="/seller/insights">Insights</Link>
                     <AuthControl email={profile?.email} />
                   </>

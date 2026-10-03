@@ -67,7 +67,7 @@ export function ReturnForm({ order }: { order: DemoOrder }) {
   }
 
   return <form className="return-form" onSubmit={submit}>
-    <section className="selected-order"><div className="product-art small">{order.image}</div><div><p className="order-number">ORDER #{order.id}</p><h2>{order.product}</h2><p>Delivered {new Date(order.deliveredAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p></div></section>
+    <section className="selected-order"><div className="product-art small">{order.image}</div><div><p className="order-number">ORDER #{order.id}</p><h2>{order.product}</h2><p>{order.deliveredAt ? `Delivered ${new Date(order.deliveredAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : `Status: ${order.status}`}</p></div></section>
     <label><span>Why are you returning this?</span><select value={reason} onChange={event => setReason(event.target.value as ReturnReason)}>{reasons.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
     <label><span>Tell us a little more <i>(optional)</i></span><textarea value={message} onChange={event => setMessage(event.target.value)} placeholder="For example: The fit around the shoulders is too tight." rows={4} /></label>
     <fieldset><legend>What would you prefer?</legend><div className="choice-row"><label><input checked={resolution === "refund"} onChange={() => setResolution("refund")} name="resolution" type="radio" /> Refund</label><label><input checked={resolution === "exchange"} onChange={() => setResolution("exchange")} name="resolution" type="radio" /> Exchange</label></div></fieldset>

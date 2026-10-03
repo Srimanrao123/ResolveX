@@ -16,10 +16,10 @@ export default async function SellerDashboard() {
           <h1>ResolveX Dashboard</h1>
           <p>Here&apos;s what your return operation needs today.</p>
         </div>
-        {isDemo
-          ? <span className="demo-pill">Demo data</span>
-          : <Link href="/orders" className="button ghost">Customer portal</Link>
-        }
+        <div style={{ display: "flex", gap: 10 }}>
+          <Link href="/seller/orders" className="button primary">Manage Orders →</Link>
+          <Link href="/orders" className="button ghost">Customer portal</Link>
+        </div>
       </div>
 
       <section className="stat-grid">

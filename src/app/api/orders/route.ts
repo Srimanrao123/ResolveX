@@ -83,10 +83,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No valid products." }, { status: 400 });
   }
 
-  // Create the order (mark as delivered so it's immediately returnable for demo)
+  // Create the new order with status ORDERED
   const displayId = `TH${Math.floor(10000 + Math.random() * 90000)}`;
-  const deliveredAt = new Date();
-  deliveredAt.setDate(deliveredAt.getDate() - Math.floor(2 + Math.random() * 8)); // 2-10 days ago
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
@@ -94,8 +92,8 @@ export async function POST(request: Request) {
       display_id: displayId,
       store_id: storeId,
       customer_id: user.id,
-      status: "DELIVERED",
-      delivered_at: deliveredAt.toISOString(),
+      status: "ORDERED",
+      delivered_at: null,
     })
     .select("id")
     .single();

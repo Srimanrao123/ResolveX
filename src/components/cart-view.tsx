@@ -42,8 +42,7 @@ export function CartView() {
         <p className="eyebrow">ORDER CONFIRMED</p>
         <h1>Your order is on its way.</h1>
         <p>
-          Order #{orderId} has been placed. It will appear in My Orders once delivered.
-          You can request a return from there.
+          Order #{orderId} has been successfully placed. You can track its delivery status in My Orders.
         </p>
         <Link className="button primary" href="/orders">View my orders →</Link>
       </section>

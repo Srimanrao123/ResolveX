@@ -22,7 +22,7 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
     );
   }
 
-  const riskColors = {
+  const riskColors: Record<string, { bg: string; color: string }> = {
     HIGH: { bg: "#fce8e6", color: "#c0392b" },
     MEDIUM: { bg: "#fff4e3", color: "#9a6000" },
     LOW: { bg: "#d8f4e6", color: "#1b5e42" },

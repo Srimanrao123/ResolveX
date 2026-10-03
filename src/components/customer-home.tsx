@@ -176,12 +176,13 @@ export function CustomerHome({ profile, orders, isDemo, returnCases }: CustomerH
                 <p className="order-number">ORDER #{order.id}</p>
                 <h2>{order.product}</h2>
                 <p>
-                  Delivered{" "}
-                  {new Date(order.deliveredAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {order.deliveredAt
+                    ? `Delivered ${new Date(order.deliveredAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}`
+                    : `Status: ${order.status}`}
                 </p>
               </div>
               <div className="order-action">

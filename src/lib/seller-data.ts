@@ -97,3 +97,73 @@ export function getDashboardMetrics(cases: ReturnCase[]) {
   const highRisk = cases.filter(item => item.risk === "HIGH");
   return { total: cases.length, approvedPercent: cases.length ? Math.round((approved.length / cases.length) * 100) : 0, review: review.length, highRisk: highRisk.length };
 }
+
+export type SellerOrderRow = {
+  id: string;
+  displayId: string;
+  status: string;
+  deliveredAt: string | null;
+  createdAt: string;
+  customerEmail: string;
+  customerName: string;
+  totalAmount: number;
+  items: {
+    id: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    imageUrl?: string;
+  }[];
+};
+
+export async function getSellerOrders(): Promise<SellerOrderRow[]> {
+  const supabase = getSupabaseAdminClient();
+  const user = await getCurrentProfile();
+  if (!supabase || user?.role !== "seller") return [];
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select(`
+      id,
+      display_id,
+      status,
+      delivered_at,
+      created_at,
+      customer:profiles ( email, full_name ),
+      order_items (
+        id,
+        quantity,
+        unit_price,
+        product:products ( name, image_url )
+      )
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return (data as any[]).map((o) => {
+    const items = (o.order_items ?? []).map((oi: any) => ({
+      id: oi.id,
+      productName: oi.product?.name ?? "Product",
+      quantity: oi.quantity ?? 1,
+      unitPrice: Number(oi.unit_price ?? 0),
+      imageUrl: oi.product?.image_url,
+    }));
+    const totalAmount = items.reduce(
+      (sum: number, it: any) => sum + it.unitPrice * it.quantity,
+      0
+    );
+
+    return {
+      id: o.id,
+      displayId: o.display_id,
+      status: o.status,
+      deliveredAt: o.delivered_at,
+      createdAt: o.created_at,
+      customerEmail: o.customer?.email ?? "Customer",
+      customerName: o.customer?.full_name ?? o.customer?.email?.split("@")[0] ?? "Customer",
+      totalAmount,
+      items,
+    };
+  });
+}

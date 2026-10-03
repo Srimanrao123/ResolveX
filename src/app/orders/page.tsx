@@ -50,14 +50,39 @@ export default async function OrdersPage() {
               <div className="order-info">
                 <p className="order-number">ORDER #{order.id}</p>
                 <h2>{order.product}</h2>
-                <p>
-                  Delivered{" "}
-                  {new Date(order.deliveredAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
+                {order.status === "DELIVERED" ? (
+                  <p>
+                    Delivered{" "}
+                    {order.deliveredAt
+                      ? new Date(order.deliveredAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : "Recently"}
+                  </p>
+                ) : (
+                  <p style={{ color: "var(--muted)" }}>
+                    Ordered{" "}
+                    {order.createdAt
+                      ? new Date(order.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : "Recently"}
+                    {" · "}
+                    <span style={{ fontWeight: 600, color: "var(--accent)" }}>
+                      {order.status === "ORDERED"
+                        ? "Order confirmed"
+                        : order.status === "PROCESSING"
+                        ? "Processing at warehouse"
+                        : order.status === "SHIPPED"
+                        ? "Out for delivery"
+                        : order.status}
+                    </span>
+                  </p>
+                )}
               </div>
               <div className="order-action">
                 <strong>{formatPrice(order.price)}</strong>
@@ -74,11 +99,17 @@ export default async function OrdersPage() {
                   >
                     Return: {returnStatus}
                   </span>
-                ) : (
+                ) : order.status === "DELIVERED" ? (
                   <span className="status delivered">Delivered</span>
+                ) : order.status === "SHIPPED" ? (
+                  <span className="status warm">Shipped</span>
+                ) : order.status === "PROCESSING" ? (
+                  <span className="status warm">Processing</span>
+                ) : (
+                  <span className="status" style={{ background: "var(--paper-2)", color: "var(--ink)", borderColor: "var(--line)" }}>Ordered</span>
                 )}
 
-                {/* "Need Help?" section replacing direct "starter" button */}
+                {/* "Need Help?" section */}
                 <details className="help-details">
                   <summary className="help-summary-btn">
                     <span>Help</span>
@@ -90,11 +121,16 @@ export default async function OrdersPage() {
                         <strong>I want to view return status →</strong>
                         <small>Current status: {returnStatus}</small>
                       </Link>
-                    ) : (
+                    ) : order.status === "DELIVERED" ? (
                       <Link className="help-menu-item" href={returnUrl}>
                         <strong>I want to return or exchange →</strong>
                         <small>14-day hassle-free resolution</small>
                       </Link>
+                    ) : (
+                      <div className="help-menu-item" style={{ cursor: "default" }}>
+                        <strong>Package in transit ({order.status})</strong>
+                        <small>Returns & exchanges unlock once item is delivered.</small>
+                      </div>
                     )}
                   </div>
                 </details>

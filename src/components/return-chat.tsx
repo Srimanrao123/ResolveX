@@ -343,12 +343,13 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
           <p className="chat-order-label">ORDER #{order.id}</p>
           <p className="chat-order-name">{order.product}</p>
           <p className="chat-order-meta">
-            Delivered{" "}
-            {new Date(order.deliveredAt).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
+            {order.deliveredAt
+              ? `Delivered ${new Date(order.deliveredAt).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}`
+              : `Status: ${order.status}`}
           </p>
         </div>
       </div>

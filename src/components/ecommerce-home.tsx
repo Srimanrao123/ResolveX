@@ -141,12 +141,13 @@ export function EcommerceHome({ profile, recentOrders = [] }: EcommerceHomeProps
                 <span className="order-strip-badge">Recent Delivery</span>
                 <h3>{lastOrder.product}</h3>
                 <p suppressHydrationWarning>
-                  Delivered on{" "}
-                  {new Date(lastOrder.deliveredAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}{" "}
+                  {lastOrder.deliveredAt
+                    ? `Delivered on ${new Date(lastOrder.deliveredAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}`
+                    : `Order placed · ${lastOrder.status}`}{" "}
                   · Order #{lastOrder.id}
                 </p>
               </div>
