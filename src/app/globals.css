@@ -67,25 +67,45 @@ img { max-width: 100%; display: block; }
   justify-content: space-between;
 }
 .brand {
-  font-weight: 900;
-  font-size: 18px;
-  letter-spacing: -.5px;
-  display: flex;
+  text-decoration: none;
+  display: inline-flex;
   align-items: center;
-  gap: 9px;
 }
-.brand em { color: var(--moss); font-style: normal; }
-.brand-mark {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: var(--moss);
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: 15px;
+.resolvex-logo-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.resolvex-mark-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.brand:hover .resolvex-mark-wrap {
+  transform: scale(1.05);
+}
+.resolvex-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: 19px;
+  letter-spacing: -0.6px;
+  font-weight: 800;
+  line-height: 1;
+}
+.resolvex-brand-name {
+  color: var(--ink);
   font-weight: 900;
-  box-shadow: 0 2px 8px rgba(27,94,66,.35);
+}
+.resolvex-brand-x {
+  color: #10b981;
+  font-weight: 950;
+  margin-left: 0.5px;
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 nav {
   display: flex;
@@ -588,6 +608,113 @@ h1 { letter-spacing: -1.5px; }
   background: #14532d !important;
   color: #fff !important;
   border-color: #14532d !important;
+}
+
+/* ─── Order Help Menu ────────────────────────────────────────────────────────── */
+.help-details {
+  position: relative;
+  display: inline-block;
+  margin-top: 6px;
+}
+.help-summary-btn {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.help-summary-btn::-webkit-details-marker {
+  display: none;
+}
+.help-summary-btn:hover {
+  background: var(--paper-3);
+  border-color: var(--muted);
+}
+.help-caret {
+  font-size: 10px;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+.help-details[open] .help-caret {
+  transform: rotate(180deg);
+}
+.help-menu-content {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 250px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  z-index: 50;
+  animation: fadeIn 0.15s ease;
+}
+.help-menu-item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: var(--radius-xs);
+  color: var(--ink);
+  text-decoration: none;
+  transition: var(--transition);
+}
+.help-menu-item:hover {
+  background: var(--paper-2);
+}
+.help-menu-item strong {
+  display: block;
+  font-size: 13px;
+  color: var(--moss);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.help-menu-item small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ─── Chat Custom Reason Input ──────────────────────────────────────────────── */
+.chat-text-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 14px;
+  margin-bottom: 10px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.chat-text-input:focus {
+  border-color: var(--moss);
+}
+
+/* ─── Auth required cart styles ────────────────────────────────────────────── */
+.auth-required-btn {
+  background: var(--ink-2) !important;
+  color: #fff !important;
+}
+.auth-required-btn:hover {
+  background: var(--ink) !important;
+}
+.auth-cart-warning {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #c0392b;
+  text-align: center;
+  font-weight: 600;
+  animation: fadeIn 0.2s ease;
 }
 
 /* ─── Legacy investigation card fallback ───────────────────────────────────── */

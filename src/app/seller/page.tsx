@@ -13,7 +13,7 @@ export default async function SellerDashboard() {
       <div className="page-heading">
         <div>
           <p className="eyebrow">SELLER PORTAL</p>
-          <h1>Good evening, Thread &amp; Hue.</h1>
+          <h1>ResolveX Dashboard</h1>
           <p>Here&apos;s what your return operation needs today.</p>
         </div>
         {isDemo
@@ -47,7 +47,7 @@ export default async function SellerDashboard() {
 
       <Link href="/seller/insights" className="insight-card">
         <div>
-          <span className="insight-label">RETURNGUARD INSIGHT</span>
+          <span className="insight-label">RESOLVEX INSIGHT</span>
           <h2>Oversized Cotton T-Shirt has a sizing signal.</h2>
           <p>
             34% of returns mention the fit is too small. Reviewing the size chart and

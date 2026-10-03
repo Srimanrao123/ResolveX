@@ -3,25 +3,28 @@ import Link from "next/link";
 import "./globals.css";
 import { CartProvider } from "@/components/cart-provider";
 import { CartNavLink } from "@/components/cart-nav-link";
+import { ResolveXLogo } from "@/components/resolve-x-logo";
 import { AuthControl } from "@/components/auth-control";
 import { getCurrentProfile } from "@/lib/app-auth";
 
 export const metadata: Metadata = {
-  title: "ReturnGuard AI — Intelligent Return Operations",
-  description: "AI-powered return management for small and medium e-commerce businesses. Investigate, resolve and learn from every return.",
+  title: "ResolveX — Intelligent Return Operations",
+  description: "AI-powered return management for modern e-commerce. Investigate, resolve, and protect your store with ResolveX.",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const profile = await getCurrentProfile();
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+      </head>
       <body>
         <CartProvider>
           <header className="site-header">
             <div className="site-header-inner">
-              <Link href="/" className="brand">
-                <span className="brand-mark">R</span>
-                ReturnGuard <em>AI</em>
+              <Link href="/" className="brand" aria-label="ResolveX Home">
+                <ResolveXLogo size="md" />
               </Link>
               <nav>
                 {profile?.role === "seller" ? (

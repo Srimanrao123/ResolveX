@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unable to create login code. Please try again." }, { status: 500 });
   }
 
-  console.log(`[ReturnGuard Auth] Generated OTP for ${normalized}: ${code}`);
+  console.log(`[ResolveX Auth] Generated OTP for ${normalized}: ${code}`);
 
   // Attempt sending via Resend if credentials are present
   let sentViaEmail = false;
@@ -46,10 +46,10 @@ export async function POST(request: Request) {
       const { error: emailError } = await resend.emails.send({
         from,
         to: normalized,
-        subject: "Your ReturnGuard verification code",
+        subject: "Your ResolveX verification code",
         html: `
           <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px">
-            <h2 style="color:#1b5e42;margin:0 0 12px">ReturnGuard AI</h2>
+            <h2 style="color:#0f172a;margin:0 0 12px">Resolve<span style="color:#10b981">X</span></h2>
             <p style="color:#4b5563;font-size:15px;margin:0 0 16px">Your single-use sign in verification code is:</p>
             <div style="background:#f0fdf4;padding:16px;border-radius:8px;text-align:center;margin:0 0 20px">
               <span style="font-size:36px;font-weight:800;letter-spacing:8px;color:#1b5e42">${code}</span>

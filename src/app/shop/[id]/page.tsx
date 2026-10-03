@@ -3,10 +3,14 @@ import Link from "next/link";
 import { AddToCart } from "@/components/add-to-cart";
 import { formatPrice } from "@/lib/demo-data";
 import { getProduct } from "@/lib/products";
+import { getCurrentProfile } from "@/lib/app-auth";
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const product = getProduct((await params).id);
   if (!product) notFound();
+
+  const profile = await getCurrentProfile();
+  const isAuthenticated = Boolean(profile);
 
   return (
     <div className="page-shell">
@@ -36,13 +40,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <p>{product.colors.join(" · ")}</p>
           </div>
 
-          <AddToCart product={product} />
+          <AddToCart product={product} isAuthenticated={isAuthenticated} />
 
           <div className="size-note">
             <strong>Size guide &amp; Return Policy</strong>
             <p>Our pieces are designed for a relaxed, true-to-size fit.</p>
             <p>
-              Protected by <strong>ReturnGuard AI</strong>: 14-day hassle-free returns with instant approval for unworn items.
+              Protected by <strong>ResolveX</strong>: 14-day hassle-free returns with instant approval for unworn items.
             </p>
           </div>
         </section>

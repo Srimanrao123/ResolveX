@@ -7,7 +7,7 @@ export default async function ShopPage() {
     <div className="page-shell">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">THREAD &amp; HUE COLLECTION</p>
+          <p className="eyebrow">RESOLVEX COLLECTION</p>
           <h1>Everyday pieces, thoughtfully made.</h1>
           <p>Explore our newest staples and quiet best sellers.</p>
         </div>

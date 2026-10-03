@@ -11,7 +11,7 @@ export default async function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <p className="eyebrow">THREAD &amp; HUE</p>
+        <p className="eyebrow">RESOLVEX</p>
         <h1>Sign in</h1>
         <p>Enter your email to receive a 6-digit verification code.</p>
         <OtpLogin />

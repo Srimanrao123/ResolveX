@@ -1,7 +1,9 @@
+import { redirect } from "next/navigation";
 import { ReturnChat } from "@/components/return-chat";
 import { demoOrders } from "@/lib/demo-data";
 import { getCustomerOrders } from "@/lib/orders";
 import { requireCustomer } from "@/lib/route-guards";
+import { getCustomerReturnForOrder } from "@/lib/customer-returns";
 
 export default async function NewReturnPage({
   searchParams,
@@ -23,6 +25,13 @@ export default async function NewReturnPage({
     (orderId ? allAvailableOrders.find((item) => item.id === orderId) : null) ??
     orders[0] ??
     demoOrders[0];
+
+  // Check if a return was already initiated for this order/item:
+  // If so, continue from that particular status rather than restarting from the beginning!
+  const existingReturn = await getCustomerReturnForOrder(order.id, order.orderItemId);
+  if (existingReturn?.display_id) {
+    redirect(`/returns/${existingReturn.display_id}`);
+  }
 
   const uniqueKey = `${order.orderItemId ?? order.id}-${order.product}`;
 

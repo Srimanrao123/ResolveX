@@ -37,7 +37,7 @@ export function EcommerceHome({ profile, recentOrders = [] }: EcommerceHomeProps
       {/* ─── Top Store Announcement Ribbon ────────────────────────── */}
       <div className="store-announcement">
         <p>
-          ✨ <strong>Complimentary Express Shipping</strong> on orders over ₹1,999 · <strong>14-Day Hassle-Free Returns</strong> powered by ReturnGuard AI
+          ✨ <strong>Complimentary Express Shipping</strong> on orders over ₹1,999 · <strong>14-Day Hassle-Free Returns</strong> powered by ResolveX
         </p>
       </div>
 
@@ -58,7 +58,7 @@ export function EcommerceHome({ profile, recentOrders = [] }: EcommerceHomeProps
             <span className="trust-icon">⚡</span>
             <div>
               <strong>14-Day Smart Returns</strong>
-              <p>Instant automated approvals and prepaid return labels via ReturnGuard AI.</p>
+              <p>Instant automated approvals and prepaid return labels via ResolveX.</p>
             </div>
           </div>
           <div className="trust-card">
@@ -170,7 +170,7 @@ export function EcommerceHome({ profile, recentOrders = [] }: EcommerceHomeProps
           <div className="editorial-art">
             <img
               src="https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1000&auto=format&fit=crop"
-              alt="Thread & Hue studio craftsmanship"
+              alt="ResolveX studio craftsmanship"
               className="product-image-cover"
             />
           </div>
@@ -178,7 +178,7 @@ export function EcommerceHome({ profile, recentOrders = [] }: EcommerceHomeProps
             <p className="eyebrow">OUR PHILOSOPHY</p>
             <h2>Crafted to last. Designed for quiet confidence.</h2>
             <p>
-              Every garment at Thread &amp; Hue begins with responsible textiles and ends with timeless silhouettes that outlive seasonal trends.
+              Every garment at ResolveX begins with responsible textiles and ends with timeless silhouettes that outlive seasonal trends.
             </p>
             <div className="editorial-perks">
               <div className="editorial-stat">
@@ -191,7 +191,7 @@ export function EcommerceHome({ profile, recentOrders = [] }: EcommerceHomeProps
               </div>
               <div className="editorial-stat">
                 <strong>Instant</strong>
-                <span>ReturnGuard AI protected</span>
+                <span>ResolveX protected</span>
               </div>
             </div>
             <Link href="/shop" className="button primary">
@@ -203,7 +203,7 @@ export function EcommerceHome({ profile, recentOrders = [] }: EcommerceHomeProps
         {/* ─── Newsletter Signup Strip ──────────────────────────────── */}
         <section className="newsletter-card">
           <div>
-            <p className="eyebrow">THREAD &amp; HUE COLLECTIVE</p>
+            <p className="eyebrow">RESOLVEX ESSENTIALS</p>
             <h2>Stay in the loop</h2>
             <p>Enjoy 10% off your next order, seasonal style guides, and early access to drops.</p>
           </div>

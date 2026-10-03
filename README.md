@@ -1,17 +1,17 @@
-# ReturnGuard AI
+# ResolveX
 
-ReturnGuard AI is an AI-powered return department for small and medium-sized e-commerce sellers. It investigates each return against the order, seller rules, evidence, and customer history before resolving it or escalating it to the seller.
+ResolveX is an AI-powered return and dispute resolution department for modern e-commerce sellers. It evaluates each return against the order, seller rules, evidence, and customer history before resolving it automatically or escalating it to the seller with intelligent recommendations.
 
 The plan preserves the full product vision while separating a convincing hackathon MVP from the capabilities built after the hackathon. See the plans in [`docs/`](docs/).
 
 ## Core demo
 
-1. A customer opens a seeded delivered order and starts a return.
+1. A customer opens a seeded delivered order and requests a return or exchange.
 2. They provide a reason in plain language and, for damage/defect claims, upload a photo.
-3. ReturnGuard checks fixed seller rules and customer-history risk signals.
-4. Claude classifies the reason, reviews relevant image evidence, and writes a case summary.
-5. The customer receives **Approved**, **More information required**, **Under seller review**, or **Not eligible**.
-6. The seller can inspect review cases and approve or reject them.
+3. ResolveX evaluates seller policies, risk signals, and evidence.
+4. Claude classifies the reason, reviews image evidence, and writes an intelligent case summary.
+5. The customer receives an immediate clear resolution: **Approved**, **More information required**, **Under seller review**, or **Not eligible**.
+6. The seller can inspect review cases and approve or reject them with one click.
 
 ## Plans
 

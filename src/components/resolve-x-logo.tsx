@@ -1,0 +1,66 @@
+import React from "react";
+
+export function ResolveXLogo({
+  size = "md",
+  showWordmark = true,
+  className = "",
+}: {
+  size?: "sm" | "md" | "lg";
+  showWordmark?: boolean;
+  className?: string;
+}) {
+  const dimensions = size === "sm" ? 24 : size === "lg" ? 36 : 28;
+
+  return (
+    <span className={`resolvex-logo-container ${className}`}>
+      <span className={`resolvex-mark-wrap size-${size}`}>
+        <svg
+          width={dimensions}
+          height={dimensions}
+          viewBox="0 0 40 40"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="resolvex-symbol"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="rx-grad-a" x1="6" y1="6" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#047857" />
+            </linearGradient>
+            <linearGradient id="rx-grad-b" x1="34" y1="6" x2="6" y2="34" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#34d399" />
+              <stop offset="100%" stopColor="#065f46" />
+            </linearGradient>
+            <filter id="rx-glow" x="-15%" y="-15%" width="130%" height="130%">
+              <feDropShadow dx="0" dy="2" stdDeviation="1.5" floodColor="#047857" floodOpacity="0.3" />
+            </filter>
+          </defs>
+          <rect width="40" height="40" rx="10" fill="#0f172a" />
+          <g filter="url(#rx-glow)">
+            {/* Primary stroke: Top-left to bottom-right */}
+            <path
+              d="M10 11C10 10.45 10.45 10 11 10H14.5C15.2 10 15.86 10.36 16.24 10.95L29.5 30H25.5C24.8 30 24.14 29.64 23.76 29.05L10.5 10.95C10.18 10.45 10 10.2 10 11Z"
+              fill="url(#rx-grad-a)"
+            />
+            {/* Secondary stroke: Top-right to bottom-left */}
+            <path
+              d="M30 11C30 10.45 29.55 10 29 10H25.5C24.8 10 24.14 10.36 23.76 10.95L10.5 29.05C10.18 29.55 10.4 30 11 30H14.5C15.2 30 15.86 29.64 16.24 29.05L29.5 10.95C29.82 10.45 30 10.2 30 11Z"
+              fill="url(#rx-grad-b)"
+              opacity="0.9"
+            />
+            {/* Nexus node */}
+            <circle cx="20" cy="20" r="3.2" fill="#34d399" />
+            <circle cx="20" cy="20" r="1.3" fill="#ffffff" />
+          </g>
+        </svg>
+      </span>
+      {showWordmark && (
+        <span className="resolvex-wordmark">
+          <span className="resolvex-brand-name">Resolve</span>
+          <span className="resolvex-brand-x">X</span>
+        </span>
+      )}
+    </span>
+  );
+}

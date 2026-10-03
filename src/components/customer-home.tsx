@@ -39,7 +39,7 @@ export function CustomerHome({ profile, orders, isDemo, returnCases }: CustomerH
       {/* ─── Top Welcome & Navigation Header ──────────────────────── */}
       <div className="page-heading">
         <div>
-          <p className="eyebrow">CUSTOMER PORTAL · THREAD &amp; HUE</p>
+          <p className="eyebrow">CUSTOMER PORTAL · RESOLVEX</p>
           <h1>Welcome back, {displayName} 👋</h1>
           <p>Manage your purchases, request automated returns, or explore our new collection.</p>
         </div>
@@ -57,14 +57,14 @@ export function CustomerHome({ profile, orders, isDemo, returnCases }: CustomerH
       {/* ─── AI Return Concierge Hero Banner ───────────────────────── */}
       <div className="concierge-card">
         <div className="concierge-content">
-          <span className="concierge-tag">⚡ Powered by ReturnGuard AI</span>
+          <span className="concierge-tag">⚡ Powered by ResolveX</span>
           <h2>Need to return or exchange an item?</h2>
           <p>
             No paperwork or endless wait times. Our AI agent inspects your order date, verifies policy eligibility, and can approve routine returns in under 30 seconds.
           </p>
           <div className="concierge-actions">
             <Link href="/orders" className="button primary">
-              Start a Return →
+              Order Help &amp; Returns →
             </Link>
             <Link href="/orders" className="button ghost">
               View All Orders ({orders.length})
@@ -186,13 +186,21 @@ export function CustomerHome({ profile, orders, isDemo, returnCases }: CustomerH
               </div>
               <div className="order-action">
                 <strong>{formatPrice(order.price)}</strong>
-                <span className="status delivered">Delivered</span>
-                <Link
-                  className="text-link"
-                  href={`/returns/new?order=${order.id}${order.orderItemId ? `&item=${order.orderItemId}` : ""}`}
-                >
-                  Start a return →
-                </Link>
+                <details className="help-details">
+                  <summary className="help-summary-btn">
+                    <span>Help</span>
+                    <span className="help-caret">▾</span>
+                  </summary>
+                  <div className="help-menu-content">
+                    <Link
+                      className="help-menu-item"
+                      href={`/returns/new?order=${order.id}${order.orderItemId ? `&item=${order.orderItemId}` : ""}`}
+                    >
+                      <strong>I want to return or exchange →</strong>
+                      <small>14-day hassle-free resolution</small>
+                    </Link>
+                  </div>
+                </details>
               </div>
             </article>
           ))}
@@ -203,7 +211,7 @@ export function CustomerHome({ profile, orders, isDemo, returnCases }: CustomerH
       <section className="customer-section">
         <div className="customer-section-header">
           <div>
-            <p className="eyebrow">THREAD &amp; HUE COLLECTION</p>
+            <p className="eyebrow">RESOLVEX COLLECTION</p>
             <h2>Trending Essentials</h2>
           </div>
           <Link href="/shop" className="text-link">

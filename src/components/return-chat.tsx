@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ResolveXLogo } from "@/components/resolve-x-logo";
 import type { DemoOrder, ReturnReason } from "@/lib/types";
 
 type Step =
   | "greeting"
   | "confirm_order"
   | "reason_input"
+  | "custom_reason"
   | "resolution"
   | "evidence"
   | "submitting"
@@ -27,7 +29,7 @@ const reasonOptions: { value: ReturnReason; label: string; emoji: string }[] = [
   { value: "WRONG_ITEM", label: "Wrong item received", emoji: "🔄" },
   { value: "NOT_AS_EXPECTED", label: "Not as described", emoji: "🖼️" },
   { value: "CHANGED_MIND", label: "Changed my mind", emoji: "💭" },
-  { value: "OTHER", label: "Something else", emoji: "❓" },
+  { value: "OTHER", label: "Other / Custom reason", emoji: "✏️" },
 ];
 
 function uid() {
@@ -39,6 +41,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
   const [step, setStep] = useState<Step>("greeting");
   const [messages, setMessages] = useState<Message[]>([]);
   const [reason, setReason] = useState<ReturnReason | null>(null);
+  const [customReason, setCustomReason] = useState("");
   const [resolution, setResolution] = useState<"refund" | "exchange">("refund");
   const [customMessage, setCustomMessage] = useState("");
   const [hasEvidence, setHasEvidence] = useState(false);
@@ -69,6 +72,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
     setMessages([]);
     setStep("greeting");
     setReason(null);
+    setCustomReason("");
     setResolution("refund");
     setCustomMessage("");
     setHasEvidence(false);
@@ -82,7 +86,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
         {
           id: uid(),
           from: "agent",
-          text: `Hi there 👋 We're here to assist with your return or exchange for **${order.product}** (Order #${order.id}).`,
+          text: `Hi there 👋 We're here to help with your order for **${order.product}** (Order #${order.id}).`,
         },
       ]);
       const t2 = setTimeout(() => {
@@ -91,7 +95,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
           {
             id: uid(),
             from: "agent",
-            text: "Would you like to initiate a return or exchange for this item?",
+            text: "How can we help you with this order today?",
           },
         ]);
         setStep("confirm_order");
@@ -103,22 +107,47 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
   }, [order.id, order.orderItemId, order.product]);
 
   function confirmOrder() {
-    addMessage("user", "Yes, start my return.");
+    addMessage("user", "I want to return or exchange this item.");
     setTimeout(() => {
       addMessage(
         "agent",
-        "Got it! What brings you to return this item? Please select the option that best describes the issue."
+        "Got it! What is the reason for your request? Please select an option or pick 'Other' to describe it."
       );
       setStep("reason_input");
     }, 500);
   }
 
   function selectReason(r: ReturnReason) {
+    if (r === "OTHER") {
+      setReason("OTHER");
+      addMessage("user", "Other / Custom reason");
+      setTimeout(() => {
+        addMessage(
+          "agent",
+          "Please describe your reason for return below so our customer care team can assist you appropriately:"
+        );
+        setStep("custom_reason");
+      }, 500);
+      return;
+    }
+
     const label = reasonOptions.find((opt) => opt.value === r)?.label ?? r;
     setReason(r);
     addMessage("user", label);
     setTimeout(() => {
       addMessage("agent", "How would you prefer to resolve this? You can also add any notes below.");
+      setStep("resolution");
+    }, 500);
+  }
+
+  function submitCustomReason() {
+    if (!customReason.trim()) return;
+    addMessage("user", `Reason: ${customReason.trim()}`);
+    setTimeout(() => {
+      addMessage(
+        "agent",
+        "Thank you for sharing those details. How would you prefer to resolve this?"
+      );
       setStep("resolution");
     }, 500);
   }
@@ -150,7 +179,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
   function skipEvidence() {
     addMessage("user", "I'll skip the photo for now.");
     setTimeout(() => {
-      addMessage("agent", "No problem. Submitting your return request now…");
+      addMessage("agent", "No problem. Submitting your request now…");
       setStep("submitting");
       submitReturn({ evidence: false });
     }, 500);
@@ -218,6 +247,10 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
       }
     }
 
+    const compiledMessage = [customReason.trim(), customMessage.trim()]
+      .filter(Boolean)
+      .join(" — ");
+
     const payload = order.orderItemId
       ? {
           orderItemId: order.orderItemId,
@@ -227,7 +260,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
           evidenceAssessment: assessment,
           evidencePath,
           evidenceContentType,
-          customerMessage: customMessage || undefined,
+          customerMessage: compiledMessage || undefined,
         }
       : {
           deliveredAt: order.deliveredAt,
@@ -324,7 +357,11 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
       <div className="chat-messages">
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-bubble-wrap ${msg.from}`}>
-            {msg.from === "agent" && <div className="chat-avatar">R</div>}
+            {msg.from === "agent" && (
+              <div className="chat-avatar-rx" aria-label="ResolveX Assistant">
+                <ResolveXLogo size="sm" showWordmark={false} />
+              </div>
+            )}
             <div
               className={`chat-bubble ${msg.from}`}
               dangerouslySetInnerHTML={{
@@ -336,7 +373,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
           </div>
         ))}
 
-        {/* Clean, customer-facing loading indicator (replaces internal investigation steps) */}
+        {/* Clean, customer-facing loading indicator */}
         {isSubmitting && (
           <div className="submitting-card">
             <div className="submitting-indicator">
@@ -356,7 +393,7 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
       {step === "confirm_order" && (
         <div className="chat-actions">
           <button className="chat-btn primary" onClick={confirmOrder}>
-            Yes, start my return →
+            I want to return or exchange this item →
           </button>
         </div>
       )}
@@ -373,6 +410,34 @@ export function ReturnChat({ order }: { order: DemoOrder }) {
               {opt.label}
             </button>
           ))}
+        </div>
+      )}
+
+      {step === "custom_reason" && (
+        <div className="chat-input-area">
+          <input
+            type="text"
+            className="chat-text-input"
+            value={customReason}
+            onChange={(e) => setCustomReason(e.target.value)}
+            placeholder="Type your return reason here…"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && customReason.trim()) {
+                submitCustomReason();
+              }
+            }}
+          />
+          <div className="chat-actions">
+            <button
+              type="button"
+              className="chat-btn primary"
+              disabled={!customReason.trim()}
+              onClick={submitCustomReason}
+            >
+              Continue with this reason →
+            </button>
+          </div>
         </div>
       )}
 
