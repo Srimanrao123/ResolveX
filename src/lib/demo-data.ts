@@ -30,3 +30,12 @@ export const reviewCases: ReturnCase[] = [
 export const formatPrice = (value: number) => new Intl.NumberFormat("en-IN", {
   style: "currency", currency: "INR", maximumFractionDigits: 0
 }).format(value);
+
+export function updateDemoCaseStatus(id: string, status: ReturnCase["status"]): boolean {
+  const item = reviewCases.find((c) => c.id === id);
+  if (item) {
+    item.status = status;
+    return true;
+  }
+  return false;
+}

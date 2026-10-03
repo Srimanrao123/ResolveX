@@ -145,7 +145,7 @@ export default async function SellerCasePage({ params }: { params: Promise<{ id:
             <strong style={{ color: rc.color }}>{item.risk}</strong>
           </section>
           <section style={{ borderBottom: 0 }}>
-            <CaseActions returnId={item.id} />
+            <CaseActions returnId={item.id} currentStatus={item.status} />
           </section>
         </aside>
       </div>

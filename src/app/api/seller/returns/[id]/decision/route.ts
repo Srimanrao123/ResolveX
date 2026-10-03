@@ -1,20 +1,71 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCurrentProfile } from "@/lib/app-auth";
+import { reviewCases, updateDemoCaseStatus } from "@/lib/demo-data";
+import type { ReturnCase } from "@/lib/types";
 
 const decisions = new Set(["approve", "reject", "request_info"]);
 
+const statusMap: Record<string, ReturnCase["status"]> = {
+  approve: "Approved",
+  reject: "Not eligible",
+  request_info: "More info",
+};
+
+const dbStatusMap: Record<string, { status: string; outcome: string }> = {
+  approve: { status: "APPROVED", outcome: "APPROVED" },
+  reject: { status: "REJECTED", outcome: "NOT_ELIGIBLE" },
+  request_info: { status: "MORE_INFO_REQUIRED", outcome: "MORE_INFO_REQUIRED" },
+};
+
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = getSupabaseAdminClient();
-  if (!supabase) return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
   const user = await getCurrentProfile();
-  if (user?.role !== "seller" || user.email !== "srimanrao0707@gmail.com") return NextResponse.json({ error: "Seller access is restricted to the approved account." }, { status: 403 });
+  if (user?.role !== "seller" || user.email !== "srimanrao0707@gmail.com") {
+    return NextResponse.json({ error: "Seller access is restricted to the approved account." }, { status: 403 });
+  }
+
   const body = await request.json().catch(() => null) as { decision?: string } | null;
-  if (!body?.decision || !decisions.has(body.decision)) return NextResponse.json({ error: "Invalid seller decision." }, { status: 400 });
+  if (!body?.decision || !decisions.has(body.decision)) {
+    return NextResponse.json({ error: "Invalid seller decision." }, { status: 400 });
+  }
+
   const { id } = await params;
-  const update = body.decision === "approve" ? { status: "APPROVED", outcome: "APPROVED" } : body.decision === "reject" ? { status: "REJECTED", outcome: "NOT_ELIGIBLE" } : { status: "MORE_INFO_REQUIRED", outcome: "MORE_INFO_REQUIRED" };
-  const { data: returnCase, error } = await supabase.from("return_cases").update(update).eq("display_id", id).select("id, display_id, status").single();
-  if (error || !returnCase) return NextResponse.json({ error: "Return case was not found." }, { status: 404 });
-  await supabase.from("return_events").insert({ return_case_id: returnCase.id, status: update.status, message: `Seller decision: ${body.decision.replace("_", " ")}.` });
-  return NextResponse.json({ returnCase });
+  const update = dbStatusMap[body.decision];
+  const targetUiStatus = statusMap[body.decision];
+  const supabase = getSupabaseAdminClient();
+
+  if (supabase) {
+    const { data: returnCase, error } = await supabase
+      .from("return_cases")
+      .update(update)
+      .or(`display_id.eq.${id},id.eq.${id}`)
+      .select("id, display_id, status")
+      .maybeSingle();
+
+    if (!error && returnCase) {
+      await supabase.from("return_events").insert({
+        return_case_id: returnCase.id,
+        status: update.status,
+        message: `Seller decision: ${body.decision.replace("_", " ")}.`,
+      });
+      return NextResponse.json({
+        returnCase,
+        status: targetUiStatus,
+        message: `Return ${body.decision.replace("_", " ")}ed successfully.`,
+      });
+    }
+  }
+
+  const demoFound = reviewCases.some((c) => c.id === id);
+  if (demoFound || id.startsWith("RET-")) {
+    updateDemoCaseStatus(id, targetUiStatus);
+    return NextResponse.json({
+      returnCase: { id, display_id: id, status: update.status },
+      status: targetUiStatus,
+      isDemo: true,
+      message: `Return ${body.decision.replace("_", " ")}ed successfully.`,
+    });
+  }
+
+  return NextResponse.json({ error: "Return case was not found." }, { status: 404 });
 }
