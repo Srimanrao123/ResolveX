@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatPrice } from "@/lib/demo-data";
 import { getDashboardMetrics, getSellerCases } from "@/lib/seller-data";
 import { requireSeller } from "@/lib/route-guards";
+import { SellerQueueTable } from "@/components/seller-queue-table";
 
 export default async function SellerDashboard() {
   await requireSeller();
@@ -16,9 +17,8 @@ export default async function SellerDashboard() {
           <h1>ResolveX Dashboard</h1>
           <p>Here&apos;s what your return operation needs today.</p>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div>
           <Link href="/seller/orders" className="button primary">Manage Orders →</Link>
-          <Link href="/orders" className="button ghost">Customer portal</Link>
         </div>
       </div>
 
@@ -46,74 +46,24 @@ export default async function SellerDashboard() {
       </section>
 
       <Link href="/seller/insights" className="insight-card">
-        <div>
-          <span className="insight-label">RESOLVEX INSIGHT</span>
+        <div className="insight-card-body">
+          <div className="insight-pill-row">
+            <span className="insight-label">✦ RESOLVEX RETURN SIGNAL</span>
+            <span className="insight-action-tag">View Analysis →</span>
+          </div>
           <h2>Oversized Cotton T-Shirt has a sizing signal.</h2>
           <p>
             34% of returns mention the fit is too small. Reviewing the size chart and
             product measurements could reduce future returns.
           </p>
         </div>
-        <span className="insight-number">34%</span>
+        <div className="insight-metric-wrap">
+          <span className="insight-number">34%</span>
+          <span className="insight-metric-label">Size-related returns</span>
+        </div>
       </Link>
 
-      <section className="queue-section">
-        <div className="section-header">
-          <div>
-            <h2>Return queue</h2>
-            <p>Cases needing attention are surfaced first.</p>
-          </div>
-          <div className="filter-pills">
-            <button className="active">All</button>
-            <button>Needs review</button>
-            <button>High risk</button>
-          </div>
-        </div>
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Return</th>
-                <th>Customer</th>
-                <th>Reason</th>
-                <th>Risk</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {cases.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "40px 16px", color: "var(--muted)" }}>
-                    No return cases yet. Returns submitted by customers will appear here in real time.
-                  </td>
-                </tr>
-              ) : (
-                cases.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <strong>{item.id}</strong>
-                      <span>{item.product} · {formatPrice(item.amount)}</span>
-                    </td>
-                    <td>{item.customer}</td>
-                    <td>{item.reason}</td>
-                    <td>
-                      <span className={`risk ${item.risk.toLowerCase()}`}>{item.risk}</span>
-                    </td>
-                    <td>{item.status}</td>
-                    <td>
-                      <Link className="text-link" href={`/seller/returns/${item.id}`}>
-                        Open →
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <SellerQueueTable cases={cases} />
     </div>
   );
 }

@@ -7,6 +7,8 @@ import { ResolveXLogo } from "@/components/resolve-x-logo";
 import { AuthControl } from "@/components/auth-control";
 import { getCurrentProfile } from "@/lib/app-auth";
 
+import { StoreFooter } from "@/components/store-footer";
+
 export const metadata: Metadata = {
   title: "ResolveX — Intelligent Return Operations",
   description: "AI-powered return management for modern e-commerce. Investigate, resolve, and protect your store with ResolveX.",
@@ -52,6 +54,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             </div>
           </header>
           <main>{children}</main>
+          {profile?.role !== "seller" && <StoreFooter />}
         </CartProvider>
       </body>
     </html>

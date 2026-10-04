@@ -44,37 +44,99 @@ export function CaseActions({ returnId, currentStatus }: { returnId: string; cur
   const canMarkRefunded = currentStatus === "Received";
 
   return (
-    <>
-      {isReviewable && <>
-        <label style={{ display: "grid", gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 600 }}>
-          Decision note <span style={{ fontWeight: 400, color: "var(--muted)" }}>(required)</span>
-          <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={3} placeholder="Explain the policy, evidence, or information needed…" />
-        </label>
-        <button onClick={() => decide("approve")} disabled={Boolean(loading)} className="button primary full">
-          {loading === "approve" ? "Saving…" : "Approve return"}
+    <div className="case-actions-wrap">
+      {isReviewable && (
+        <>
+          <label className="case-action-label">
+            <span>Decision note <small>(required for review)</small></span>
+            <textarea
+              className="case-action-textarea"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              rows={3}
+              placeholder="Explain the policy, evidence, or information needed…"
+            />
+          </label>
+          <div className="case-action-btn-stack">
+            <button
+              onClick={() => decide("approve")}
+              disabled={Boolean(loading)}
+              className="button primary full"
+            >
+              {loading === "approve" ? "Saving…" : "✓ Approve return"}
+            </button>
+            <button
+              onClick={() => decide("reject")}
+              disabled={Boolean(loading)}
+              className="button danger full"
+            >
+              {loading === "reject" ? "Saving…" : "✕ Reject return"}
+            </button>
+            <button
+              onClick={() => decide("request_info")}
+              disabled={Boolean(loading)}
+              className="button ghost full"
+            >
+              {loading === "request_info" ? "Saving…" : "✉ Request information"}
+            </button>
+          </div>
+        </>
+      )}
+
+      {canMarkReturning && (
+        <button
+          onClick={() => decide("mark_returning")}
+          disabled={Boolean(loading)}
+          className="button ghost full"
+        >
+          {loading === "mark_returning" ? "Saving…" : "🚚 Mark item returning"}
         </button>
-        <button onClick={() => decide("reject")} disabled={Boolean(loading)} className="button danger full">
-          {loading === "reject" ? "Saving…" : "Reject return"}
+      )}
+
+      {canMarkReceived && (
+        <button
+          onClick={() => decide("mark_received")}
+          disabled={Boolean(loading)}
+          className="button primary full"
+        >
+          {loading === "mark_received" ? "Saving…" : "📥 Mark item received"}
         </button>
-        <button onClick={() => decide("request_info")} disabled={Boolean(loading)} className="button ghost full">
-          {loading === "request_info" ? "Saving…" : "Request information"}
-        </button>
-      </>}
-      {canMarkReturning && <button onClick={() => decide("mark_returning")} disabled={Boolean(loading)} className="button ghost full">Mark item returning</button>}
-      {canMarkReceived && <button onClick={() => decide("mark_received")} disabled={Boolean(loading)} className="button primary full">{loading === "mark_received" ? "Saving…" : "Mark item received"}</button>}
-      {canMarkRefunded && <>
-        <label style={{ display: "grid", gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 600 }}>
-          Refund reference <span style={{ fontWeight: 400, color: "var(--muted)" }}>(required)</span>
-          <input value={refundReference} onChange={(event) => setRefundReference(event.target.value)} placeholder="Provider transaction or manual reference" />
-        </label>
-        <button onClick={() => decide("mark_refunded")} disabled={Boolean(loading)} className="button primary full">{loading === "mark_refunded" ? "Saving…" : "Mark refund issued"}</button>
-      </>}
-      {!isReviewable && !canMarkReturning && !canMarkReceived && !canMarkRefunded && <p style={{ color: "var(--muted)", fontSize: 13 }}>No further return action is available for this status.</p>}
+      )}
+
+      {canMarkRefunded && (
+        <>
+          <label className="case-action-label">
+            <span>Refund reference <small>(required)</small></span>
+            <input
+              className="case-action-input"
+              value={refundReference}
+              onChange={(event) => setRefundReference(event.target.value)}
+              placeholder="Provider transaction or manual reference"
+            />
+          </label>
+          <button
+            onClick={() => decide("mark_refunded")}
+            disabled={Boolean(loading)}
+            className="button primary full"
+          >
+            {loading === "mark_refunded" ? "Saving…" : "💳 Mark refund issued"}
+          </button>
+        </>
+      )}
+
+      {!isReviewable && !canMarkReturning && !canMarkReceived && !canMarkRefunded && (
+        <div className="case-action-settled">
+          <span>✓</span>
+          <p>No further return action is required for this case status.</p>
+        </div>
+      )}
+
       {message && (
         <p className={`action-message ${isError ? "error" : "success"}`}>
+          {isError ? "⚠️ " : "✓ "}
           {message}
         </p>
       )}
-    </>
+    </div>
   );
 }
